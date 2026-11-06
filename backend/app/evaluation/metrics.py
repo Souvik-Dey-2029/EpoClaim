@@ -96,10 +96,14 @@ def compute_freshness_metrics(
     fresh_tests = [r for r in eval_results if r.get("test_type") == "fresh"]
 
     # Stale detection rate
+    # Scenarios where old claim was expected to be OUTDATED or CONTRADICTED (or not specified)
+    stale_expected_tests = [
+        r for r in stale_tests if r.get("expected_verdict") in {"OUTDATED", "CONTRADICTED"} or "expected_verdict" not in r
+    ]
     stale_detected = sum(
-        1 for r in stale_tests if r.get("predicted_verdict") in {"OUTDATED", "CONTRADICTED"}
+        1 for r in stale_expected_tests if r.get("predicted_verdict") in {"OUTDATED", "CONTRADICTED"}
     )
-    stale_rate = stale_detected / max(1, len(stale_tests))
+    stale_rate = stale_detected / max(1, len(stale_expected_tests))
 
     # Fresh acceptance rate
     fresh_accepted = sum(1 for r in fresh_tests if r.get("predicted_verdict") == "SUPPORTED")

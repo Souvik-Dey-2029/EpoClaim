@@ -49,18 +49,37 @@ class FreshnessService:
 
         # Check for TEMPORAL SUPERSEDENCE:
         # A claim is OUTDATED if:
-        # 1. We have supporting evidence with a timestamp T1, AND
-        # 2. We have contradictory evidence with a timestamp T2, AND
-        # 3. T2 is significantly newer than T1 (e.g. T2 > T1), showing the state of the world changed!
-        # OR the contradictory evidence explicitly cites a superseding update.
+        # 1. It is time-sensitive (NOT a historical invariant), AND
+        # 2. We have supporting evidence with timestamp T1, AND
+        # 3. We have actual contradictory evidence with timestamp T2 where T2 > T1,
+        #    OR the contradictory evidence explicitly cites a state-changing event (resignation, replacement).
+        # Both event_date (factual state transition) and publication_date (reporting recency) are tracked independently.
         is_superseded = False
-        if newest_contra_date and newest_support_date:
-            if newest_contra_date > newest_support_date:
-                is_superseded = True
-        elif contradicting and any("no longer" in (r.citation_text.lower()) or "stepped down" in (r.citation_text.lower()) for r in contradicting):
-            is_superseded = True
+        supersedes_older_contradiction = False
+        supersedence_cues = [
+            "no longer", "stepped down", "resigned", "concluding", "concluded",
+            "returned as", "reinstated", "replaced by", "replaced", "succeeded by",
+            "succeeded", "is now the latest", "now the latest", "now the current",
+            "former", "ex-", "previously", "defeated", "retracted",
+        ]
+
+        if sensitivity != TemporalSensitivity.TIME_INVARIANT:
+            if newest_contra_date and newest_support_date:
+                if newest_contra_date > newest_support_date:
+                    is_superseded = True
+                elif newest_support_date > newest_contra_date:
+                    # Supporting evidence is newer than older contradictory state
+                    supersedes_older_contradiction = True
+            elif not is_superseded and contradicting and not supporting:
+                for r in contradicting:
+                    c_text = f"{r.citation_text} {r.verification_context}".lower()
+                    if any(cue in c_text for cue in supersedence_cues):
+                        is_superseded = True
+                        break
 
         updated_verdict = verification.verdict
+        if supersedes_older_contradiction and verification.verdict == VerificationVerdict.CONTRADICTED:
+            updated_verdict = VerificationVerdict.SUPPORTED
 
         # Calculate decay factor
         if sensitivity == TemporalSensitivity.TIME_INVARIANT:
@@ -123,7 +142,7 @@ class FreshnessService:
         """Find the most recent publication or update date from a set of records."""
         dates = []
         for r in records:
-            d = r.last_updated_date or r.publication_date
+            d = r.event_date or r.last_updated_date or r.publication_date
             if d:
                 # Ensure UTC
                 if d.tzinfo is None:

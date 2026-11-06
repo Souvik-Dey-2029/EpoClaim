@@ -10,6 +10,7 @@ from app.services.pipeline import EpoClaimPipeline
 from app.evaluation.runner import BenchmarkRunner
 from app.storage.repository import report_repo
 from app.core.config import settings
+from app.integrations.tavily import tavily_client
 
 router = APIRouter(prefix="/api/v1", tags=["Analysis & Verification"])
 pipeline = EpoClaimPipeline()
@@ -29,6 +30,12 @@ async def analyze_response(request: AnalyzeRequest) -> FinalReport:
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Analysis pipeline error: {str(exc)}",
         )
+
+
+@router.get("/tavily/status", response_model=Dict[str, Any], status_code=status.HTTP_200_OK)
+async def tavily_status() -> Dict[str, Any]:
+    """Return backend-visible Tavily operational status, budget, and ledger statistics."""
+    return tavily_client.get_operational_status()
 
 
 @router.get("/health", response_model=Dict[str, Any], status_code=status.HTTP_200_OK)

@@ -32,12 +32,10 @@ class BenchmarkRunner:
         results = []
 
         for scen in target_scenarios:
-            context_texts = [d.get("content", "") for d in scen.context_docs]
-
             # 1. Test Stale Claim
             stale_req = AnalyzeRequest(
                 response_text=scen.original_claim,
-                context_documents=context_texts,
+                context_documents=scen.context_docs,
                 enable_live_search=False,  # Use controlled scenario context docs
             )
             stale_report = await self.pipeline.run(stale_req)
@@ -60,7 +58,7 @@ class BenchmarkRunner:
             # 2. Test Updated / Fresh Claim
             fresh_req = AnalyzeRequest(
                 response_text=scen.updated_claim,
-                context_documents=context_texts,
+                context_documents=scen.context_docs,
                 enable_live_search=False,
             )
             fresh_report = await self.pipeline.run(fresh_req)

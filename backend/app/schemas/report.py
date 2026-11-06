@@ -1,7 +1,7 @@
 """Schemas for the unified analysis report and detailed claim items."""
 from __future__ import annotations
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
 from app.schemas.claims import AtomicClaim
@@ -57,9 +57,9 @@ class AnalyzeRequest(BaseModel):
         ...,
         description="The AI-generated response text to verify for factuality and freshness"
     )
-    context_documents: Optional[List[str]] = Field(
+    context_documents: Optional[List[Union[str, Dict[str, Any]]]] = Field(
         default=None,
-        description="Optional local grounding documents to include alongside live search"
+        description="Optional local grounding documents (plain strings or dicts with metadata) to include alongside live search"
     )
     enable_live_search: bool = Field(
         default=True,

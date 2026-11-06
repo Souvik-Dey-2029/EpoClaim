@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
-import { checkHealth, analyzeResponse, runBenchmark } from "./api";
-import type { FinalReport, ClaimAnalysisDetail, BenchmarkReport } from "./types";
+import { checkHealth, analyzeResponse, runBenchmark, getTavilyStatus } from "./api";
+import type { FinalReport, ClaimAnalysisDetail, BenchmarkReport, TavilyStatus } from "./types";
 
 const SAMPLE_PROMPTS = [
   {
@@ -32,6 +32,7 @@ const SAMPLE_PROMPTS = [
 export function App() {
   const [activeTab, setActiveTab] = useState<"analyzer" | "benchmark">("analyzer");
   const [health, setHealth] = useState<{ status: string; integrations: Record<string, boolean> } | null>(null);
+  const [tavilyStatus, setTavilyStatus] = useState<TavilyStatus | null>(null);
 
   // Analyzer state
   const [prompt, setPrompt] = useState("");
@@ -52,6 +53,10 @@ export function App() {
     checkHealth()
       .then(setHealth)
       .catch(() => setHealth({ status: "offline", integrations: {} }));
+
+    getTavilyStatus()
+      .then(setTavilyStatus)
+      .catch(() => setTavilyStatus(null));
   }, []);
 
   const handleAnalyze = async () => {
@@ -204,7 +209,14 @@ export function App() {
                     checked={enableLiveSearch}
                     onChange={(e) => setEnableLiveSearch(e.target.checked)}
                   />
-                  <span>Enable Live Web Research (Tavily Search API)</span>
+                  <span>
+                    Enable Live Web Research (Tavily Search API)
+                    {tavilyStatus && (
+                      <span style={{ marginLeft: "8px", fontSize: "11px", opacity: 0.8 }}>
+                        [Budget: {tavilyStatus.available_credits}/{tavilyStatus.budget_cap} credits | Cache hits: {tavilyStatus.cache_hits}]
+                      </span>
+                    )}
+                  </span>
                 </label>
                 <button
                   className="primary-btn"

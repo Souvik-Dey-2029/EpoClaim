@@ -1,4 +1,4 @@
-import type { AnalyzeRequest, FinalReport, BenchmarkReport } from "./types";
+import type { AnalyzeRequest, FinalReport, BenchmarkReport, TavilyStatus } from "./types";
 
 const API_BASE_URL =
   import.meta.env.VITE_API_BASE_URL !== undefined
@@ -11,6 +11,14 @@ export async function checkHealth(): Promise<{ status: string; integrations: Rec
   const resp = await fetch(`${API_BASE_URL}/api/v1/health`);
   if (!resp.ok) {
     throw new Error(`Health check failed with status ${resp.status}`);
+  }
+  return resp.json();
+}
+
+export async function getTavilyStatus(): Promise<TavilyStatus> {
+  const resp = await fetch(`${API_BASE_URL}/api/v1/tavily/status`);
+  if (!resp.ok) {
+    throw new Error(`Tavily status check failed with status ${resp.status}`);
   }
   return resp.json();
 }

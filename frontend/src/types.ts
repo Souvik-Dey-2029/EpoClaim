@@ -99,6 +99,21 @@ export interface AnalyzeRequest {
   reference_date?: string;
 }
 
+export interface TavilyStatus {
+  configured: boolean;
+  search_depth: string;
+  budget_cap: number;
+  consumed_credits: number;
+  reserved_credits: number;
+  available_credits: number;
+  cache_hits: number;
+  active_cached_queries: number;
+  successful_searches: number;
+  failed_searches: number;
+  blocked_searches: number;
+  rate_limit_per_minute: number;
+}
+
 export interface BenchmarkReport {
   benchmark_id: string;
   total_scenarios: number;

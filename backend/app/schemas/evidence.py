@@ -33,6 +33,14 @@ class EvidenceRecord(BaseModel):
         default=None,
         description="Last modified date of the source document"
     )
+    event_date: Optional[datetime] = Field(
+        default=None,
+        description="Explicit event timestamp mentioned in the evidence passage"
+    )
+    parent_doc_id: Optional[str] = Field(
+        default=None,
+        description="Identifier of parent source document if segmented into sentences"
+    )
     retrieved_at: datetime = Field(
         default_factory=utc_now,
         description="Timestamp when EpoClaim retrieved this record"

@@ -2,6 +2,7 @@
 from __future__ import annotations
 
 from typing import List
+from pydantic import AliasChoices, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -28,7 +29,16 @@ class Settings(BaseSettings):
     database_url: str = "sqlite:///./epoclaim.db"
 
     # External APIs & Models
-    tavily_api_key: str = ""
+    tavily_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("EPOCLAIM_TAVILY_API_KEY", "TAVILY_API_KEY"),
+        description="Tavily API key loaded exclusively from backend environment",
+    )
+    tavily_max_results: int = 5
+    tavily_search_depth: str = "basic"
+    tavily_rate_limit_per_minute: int = 2
+    tavily_cache_ttl_hours: float = 24.0
+    tavily_max_searches_per_analysis: int = 5
     bifrost_endpoint: str = ""
     openai_api_key: str = ""
     anthropic_api_key: str = ""

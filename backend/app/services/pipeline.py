@@ -9,7 +9,7 @@ from __future__ import annotations
 import time
 import re
 import logging
-from typing import List, Optional
+from typing import Any, Dict, List, Optional
 from datetime import datetime
 
 from app.schemas.claims import AtomicClaim
@@ -24,6 +24,7 @@ from app.services.temporal_analysis.service import TemporalAnalysisService
 from app.services.evidence_research.service import EvidenceResearchService
 from app.services.evidence_retrieval.bm25 import BM25Retriever
 from app.services.evidence_retrieval.dense import DenseRetriever
+from app.services.evidence_retrieval.segmentation import EvidenceSegmentationService
 from app.services.evidence_ranking.rrf import reciprocal_rank_fusion
 from app.services.evidence_ranking.reranker import NLIReranker
 from app.services.claim_verification.service import ClaimVerificationService
@@ -44,6 +45,7 @@ class EpoClaimPipeline:
         self.researcher = EvidenceResearchService()
         self.bm25 = BM25Retriever()
         self.dense = DenseRetriever()
+        self.segmenter = EvidenceSegmentationService()
         self.reranker = NLIReranker()
         self.verifier = ClaimVerificationService()
         self.freshness = FreshnessService()
@@ -72,47 +74,32 @@ class EpoClaimPipeline:
             if norm_claim.entity:
                 last_entity = norm_claim.entity
 
-        # 4. Context documents ingestion (if provided in request)
+        # 4. Context documents ingestion (with sentence-level evidence segmentation)
         local_evidence: List[EvidenceRecord] = []
-        date_pattern = re.compile(
-            r"\b(?:Jan(?:uary)?|Feb(?:ruary)?|Mar(?:ch)?|Apr(?:il)?|May|Jun(?:e)?|Jul(?:y)?|Aug(?:ust)?|Sep(?:tember)?|Oct(?:ober)?|Nov(?:ember)?|Dec(?:ember)?)\s+\d{1,2},?\s+\d{4}\b|\b\d{4}-\d{2}-\d{2}\b",
-            re.IGNORECASE,
-        )
         if request.context_documents:
-            for idx, doc_text in enumerate(request.context_documents):
-                doc_date = None
-                date_match = date_pattern.search(doc_text)
-                if date_match:
-                    doc_date = parse_datetime(date_match.group(0))
+            for idx, doc_item in enumerate(request.context_documents, start=1):
+                segmented_records = self.segmenter.segment_document(doc_item, doc_index=idx)
+                local_evidence.extend(segmented_records)
 
-                local_evidence.append(
-                    EvidenceRecord(
-                        evidence_id=f"ctx_{idx + 1}",
-                        claim_id="global_context",
-                        source_url=None,
-                        source_title=f"Context Document {idx + 1}",
-                        source_domain="context",
-                        publication_date=doc_date,
-                        citation_text=doc_text[:250],
-                        verification_context=doc_text,
-                        relevance_score=0.8,
-                        source_quality=0.9,
-                        retrieval_method=RetrievalMethod.KNOWLEDGE_BASE.value,
-                    )
-                )
+        # 5. Live Web Evidence Research (if enabled and requested)
+        web_evidence: List[EvidenceRecord] = []
+        research_metadata: Dict[str, Any] = {
+            "searches_executed": 0,
+            "cache_hits": 0,
+            "total_web_records": 0,
+            "clustered_unique_records": 0,
+            "errors": [],
+        }
+
+        if request.enable_live_search:
+            web_evidence, research_metadata = await self.researcher.research_claims(normalized_claims)
 
         claim_details: List[ClaimAnalysisDetail] = []
-        search_queries_count = 0
 
-        # 5. Process each claim through research, retrieval, ranking, verification, and freshness
+        # 6. Process each claim through candidate pool, retrieval, ranking, verification, and freshness
         for claim in normalized_claims:
-            candidate_pool: List[EvidenceRecord] = list(local_evidence)
-
-            # Web Research (if enabled)
-            if request.enable_live_search:
-                live_records = await self.researcher.research_claim(claim)
-                search_queries_count += len(self.researcher.generate_search_queries(claim))
-                candidate_pool.extend(live_records)
+            # Combine local evidence and web evidence relevant to this run
+            candidate_pool: List[EvidenceRecord] = list(local_evidence) + list(web_evidence)
 
             if not candidate_pool:
                 # No external or local evidence available
@@ -163,9 +150,24 @@ class EpoClaimPipeline:
 
         duration_ms = int((time.perf_counter() - start_time) * 1000)
 
+        # Disclose retrieval modes and errors cleanly
+        retrieval_mode = "local_only"
+        if request.enable_live_search:
+            if research_metadata["searches_executed"] > 0:
+                retrieval_mode = "live_web_retrieved"
+            elif research_metadata["cache_hits"] > 0:
+                retrieval_mode = "cached_web_reused"
+            elif research_metadata.get("errors"):
+                retrieval_mode = "web_retrieval_failed"
+            else:
+                retrieval_mode = "web_retrieval_unavailable"
+
         metadata = {
             "duration_ms": duration_ms,
-            "search_queries_executed": search_queries_count,
+            "retrieval_mode": retrieval_mode,
+            "search_queries_executed": research_metadata["searches_executed"],
+            "cache_hits": research_metadata["cache_hits"],
+            "web_search_errors": research_metadata.get("errors", []),
             "models_used": {
                 "dense_retrieval": self.dense.model_name,
                 "nli_reranker": self.reranker.model_name,
@@ -173,10 +175,10 @@ class EpoClaimPipeline:
             "reference_date": ref_dt.isoformat() if ref_dt else None,
         }
 
-        # 6. Report Compilation
+        # 7. Report Compilation
         report = self.reporting.generate_report(request.response_text, claim_details, metadata)
 
-        # 7. Persistence
+        # 8. Persistence
         try:
             report_repo.save_report(report)
         except Exception as exc:
