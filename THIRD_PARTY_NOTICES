@@ -1,0 +1,115 @@
+# THIRD-PARTY SOFTWARE NOTICES AND LICENSES
+
+This document acknowledges the third-party open-source repositories and packages inspected and incorporated into the EpoClaim project.
+
+---
+
+## 1. StaleBench
+
+- **Repository**: `KaranSinghDev/StaleBench`
+- **Origin URL**: https://github.com/KaranSinghDev/StaleBench
+- **License**: Apache License, Version 2.0
+- **Copyright**: Copyright 2026 Karan Singh
+- **Attribution / Notice**:
+  ```text
+  StaleBench
+  Copyright 2026 Karan Singh
+
+  This product includes software developed by Karan Singh.
+  The source code in this repository is licensed under the Apache License,
+  Version 2.0. The experiment data under the results/ directory is licensed
+  under the Creative Commons Attribution 4.0 International License (CC-BY-4.0).
+  ```
+- **Usage in EpoClaim**:
+  Evaluation benchmark runner, scenario generator, and freshness metrics (recovery rate, Wilson 95% confidence intervals, catch-up latency, and token-based phrase matching) adapted under Apache 2.0.
+
+---
+
+## 2. LLM Hallucination Detector
+
+- **Repository**: `SYasJ/llm-hallucination-detector`
+- **Origin URL**: https://github.com/SYasJ/llm-hallucination-detector
+- **License**: MIT License
+- **Copyright**: Copyright (c) 2026 Yasir Jilani and LLM Hallucination Detector contributors
+- **Notice**:
+  ```text
+  MIT License
+
+  Copyright (c) 2026 Yasir Jilani and LLM Hallucination Detector contributors
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+  ```
+- **Usage in EpoClaim**:
+  Claim verification architectural pattern, HTTP security controls (payload limits, content-type enforcement, safe URL validation, error masking), and input-to-output claim text mapping adapted under MIT.
+
+---
+
+## 3. RAGEval
+
+- **Repository**: `pandeyvishwas51-oss/rageval`
+- **Origin URL**: https://github.com/pandeyvishwas51-oss/rageval
+- **License**: MIT License
+- **Copyright**: Copyright (c) 2026 pandeyvishwas51-oss
+- **Notice**:
+  ```text
+  MIT License
+
+  Copyright (c) 2026 pandeyvishwas51-oss
+
+  Permission is hereby granted, free of charge, to any person obtaining a copy
+  of this software and associated documentation files (the "Software"), to deal
+  in the Software without restriction, including without limitation the rights
+  to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+  copies of the Software, and to permit persons to whom the Software is
+  furnished to do so, subject to the following conditions:
+
+  The above copyright notice and this permission notice shall be included in all
+  copies or substantial portions of the Software.
+
+  THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+  IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+  FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+  AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+  LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+  OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+  SOFTWARE.
+  ```
+- **Usage in EpoClaim**:
+  Modular evaluation framework pattern, evaluation models, and temporal metadata structures. Note: The exponential decay calculation was mathematically corrected in EpoClaim from the upstream `exp(-age/T)` to true half-life decay `2^(-age/half_life) = exp(-ln(2)*age/half_life)` as required by the specification.
+
+---
+
+## 4. Fact Verification Pipeline (Reference Only — No License)
+
+- **Repository**: `minko186/fact-verification-pipeline`
+- **Origin URL**: https://github.com/minko186/fact-verification-pipeline
+- **License Status**: NO APPLICABLE LICENSE IN REPOSITORY SNAPSHOT.
+- **Handling**:
+  **NO CODE HAS BEEN COPIED, TRANSPLANTED, OR DERIVED.** Used exclusively as an algorithmic reference. All techniques (Reciprocal Rank Fusion, BM25/Dense hybrid retrieval, stance-neutral NLI reranking formula $P(\text{Entailment}) + P(\text{Contradiction})$, and 3-way NLI verification mapping) have been independently authored and implemented in clean-room fashion.
+
+---
+
+## 5. TruthLens AI (Reference Only — No License)
+
+- **Repository**: `N-JrP/truthlens-ai`
+- **Origin URL**: https://github.com/N-JrP/truthlens-ai
+- **License Status**: NO APPLICABLE LICENSE IN REPOSITORY SNAPSHOT.
+- **Handling**:
+  **NO CODE HAS BEEN COPIED, TRANSPLANTED, OR DERIVED.** Used exclusively as a high-level architectural reference for multi-stage pipeline orchestration, distinction between `citation_text` and `verification_context`, separate relevance vs entailment evaluation, and information-need decomposition. All components in EpoClaim have been independently authored from scratch.
+
