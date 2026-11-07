@@ -1,6 +1,7 @@
 """Schemas for the unified analysis report and detailed claim items."""
 from __future__ import annotations
 
+from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
 from pydantic import BaseModel, Field
 
@@ -47,6 +48,14 @@ class FinalReport(BaseModel):
         default=None,
         description="Evidence-grounded corrected answer synthesized from verified propositions"
     )
+    scoring_mode: str = Field(
+        default="baseline",
+        description="Scoring formula used: 'baseline' or 'cluster_capped_experimental'"
+    )
+    temporal_evaluation_mode: str = Field(
+        default="default",
+        description="Temporal evaluation mode used: 'default', 'historical', or 'system_as_known'"
+    )
     execution_metadata: Dict[str, Any] = Field(
         default_factory=dict,
         description="Runtime statistics: duration_ms, search_queries_executed, models_used"
@@ -74,5 +83,21 @@ class AnalyzeRequest(BaseModel):
     reference_date: Optional[str] = Field(
         default=None,
         description="Optional ISO timestamp to treat as 'now' for temporal backtesting"
+    )
+    temporal_evaluation_mode: str = Field(
+        default="default",
+        description="Temporal reasoning mode: 'default', 'historical', or 'system_as_known'"
+    )
+    as_known_cutoff: Optional[datetime] = Field(
+        default=None,
+        description="Cutoff timestamp for 'system_as_known' mode (evidence recorded/published after this is ignored)"
+    )
+    target_event_time: Optional[datetime] = Field(
+        default=None,
+        description="Target real-world time anchor for 'historical' evaluation mode"
+    )
+    enable_correlation_discounted_scoring: Optional[bool] = Field(
+        default=None,
+        description="Override for correlation-aware cluster-capped scoring aggregation"
     )
 

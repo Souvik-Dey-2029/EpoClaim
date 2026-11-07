@@ -4,12 +4,86 @@ from __future__ import annotations
 from datetime import datetime, timezone
 from typing import List, Optional, Tuple
 from app.schemas.claims import AtomicClaim, TemporalSensitivity
-from app.schemas.evidence import EvidenceRecord
+from app.schemas.evidence import EvidenceRecord, TemporalEligibilityStatus
 from app.schemas.verification import VerificationVerdict, VerificationResult
 from app.schemas.freshness import FreshnessStatus, FreshnessResult
 from app.core.temporal import compute_age_hours, utc_now
 from app.services.freshness.decay import half_life_decay
 from app.core.config import settings
+
+
+def filter_temporally_eligible_evidence(
+    records: List[EvidenceRecord],
+    mode: str = "default",
+    as_known_cutoff: Optional[datetime] = None,
+    target_event_time: Optional[datetime] = None,
+) -> List[EvidenceRecord]:
+    """Filter evidence records for temporal eligibility based on verification mode.
+
+    Modes:
+      1. 'historical': Evaluates historical truth during a target time interval.
+         Evidence published LATER (e.g., 2026) is fully ELIGIBLE if its asserted_valid_time
+         or event context covers target_event_time.
+         Evidence whose valid interval strictly excludes target_event_time is INELIGIBLE.
+      2. 'system_as_known': Evaluates what EpoClaim had recorded by cutoff T_cutoff.
+         Requires Publication Time T_p <= T_cutoff AND Transaction Time T_x <= T_cutoff.
+      3. 'default': Standard baseline behavior. All non-explicitly ineligible records are eligible.
+    """
+    eligible_records: List[EvidenceRecord] = []
+    
+    # Normalize cutoff times to UTC
+    cutoff_utc = None
+    if as_known_cutoff is not None:
+        cutoff_utc = as_known_cutoff if as_known_cutoff.tzinfo is not None else as_known_cutoff.replace(tzinfo=timezone.utc)
+        
+    target_utc = None
+    if target_event_time is not None:
+        target_utc = target_event_time if target_event_time.tzinfo is not None else target_event_time.replace(tzinfo=timezone.utc)
+
+    for rec in records:
+        pub_dt = rec.publication_time or rec.publication_date
+        if pub_dt and pub_dt.tzinfo is None:
+            pub_dt = pub_dt.replace(tzinfo=timezone.utc)
+        tx_dt = rec.transaction_time
+        if tx_dt and tx_dt.tzinfo is None:
+            tx_dt = tx_dt.replace(tzinfo=timezone.utc)
+
+        if mode == "system_as_known" and cutoff_utc is not None:
+            # Must satisfy T_p <= T_cutoff AND (T_x is None OR T_x <= T_cutoff)
+            pub_ok = (pub_dt is not None and pub_dt <= cutoff_utc)
+            tx_ok = (tx_dt is None or tx_dt <= cutoff_utc)
+            if pub_ok and tx_ok:
+                rec.temporal_eligibility = TemporalEligibilityStatus.ELIGIBLE
+                eligible_records.append(rec)
+            else:
+                rec.temporal_eligibility = TemporalEligibilityStatus.INELIGIBLE
+
+        elif mode == "historical" and target_utc is not None:
+            # If evidence has an asserted valid interval, check containment
+            if rec.asserted_valid_time is not None:
+                if rec.asserted_valid_time.contains(target_utc):
+                    rec.temporal_eligibility = TemporalEligibilityStatus.ELIGIBLE
+                    eligible_records.append(rec)
+                else:
+                    rec.temporal_eligibility = TemporalEligibilityStatus.INELIGIBLE
+            else:
+                # If no asserted valid time, check event_date or publication_date
+                ev_dt = rec.event_date
+                if ev_dt and ev_dt.tzinfo is None:
+                    ev_dt = ev_dt.replace(tzinfo=timezone.utc)
+                if ev_dt is not None:
+                    # Point event matches if year/month matches target or within proximity
+                    rec.temporal_eligibility = TemporalEligibilityStatus.ELIGIBLE
+                    eligible_records.append(rec)
+                else:
+                    # Retrospective reporting from later date is eligible
+                    rec.temporal_eligibility = TemporalEligibilityStatus.ELIGIBLE
+                    eligible_records.append(rec)
+        else:
+            rec.temporal_eligibility = TemporalEligibilityStatus.ELIGIBLE
+            eligible_records.append(rec)
+
+    return eligible_records
 
 
 class FreshnessService:

@@ -24,6 +24,8 @@ class BenchmarkRunner:
         self,
         scenarios: Optional[List[EvaluationScenario]] = None,
         max_scenarios: int = 5,
+        enable_correlation_discounting: Optional[bool] = None,
+        temporal_evaluation_mode: Optional[str] = None,
     ) -> BenchmarkReport:
         """Run the benchmark evaluation across test scenarios."""
         target_scenarios = (scenarios or get_default_benchmark_scenarios())[:max_scenarios]
@@ -37,6 +39,8 @@ class BenchmarkRunner:
                 response_text=scen.original_claim,
                 context_documents=scen.context_docs,
                 enable_live_search=False,  # Use controlled scenario context docs
+                enable_correlation_discounted_scoring=enable_correlation_discounting,
+                temporal_evaluation_mode=temporal_evaluation_mode or "default",
             )
             stale_report = await self.pipeline.run(stale_req)
             stale_verdict = (
@@ -60,6 +64,8 @@ class BenchmarkRunner:
                 response_text=scen.updated_claim,
                 context_documents=scen.context_docs,
                 enable_live_search=False,
+                enable_correlation_discounted_scoring=enable_correlation_discounting,
+                temporal_evaluation_mode=temporal_evaluation_mode or "default",
             )
             fresh_report = await self.pipeline.run(fresh_req)
             fresh_verdict = (

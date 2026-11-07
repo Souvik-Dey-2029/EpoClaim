@@ -17,6 +17,7 @@ from app.schemas.evidence import EvidenceRecord, RetrievalMethod
 from app.schemas.report import FinalReport, ClaimAnalysisDetail, AnalyzeRequest
 from app.core.security import validate_input_size, sanitize_untrusted_text
 from app.core.temporal import parse_datetime
+from app.core.config import settings
 
 from app.services.claim_extraction.service import ClaimExtractionService
 from app.services.claim_normalization.service import ClaimNormalizationService
@@ -28,7 +29,9 @@ from app.services.evidence_retrieval.segmentation import EvidenceSegmentationSer
 from app.services.evidence_ranking.rrf import reciprocal_rank_fusion
 from app.services.evidence_ranking.reranker import NLIReranker
 from app.services.claim_verification.service import ClaimVerificationService
-from app.services.freshness.service import FreshnessService
+from app.services.claim_verification.llm_interface import BaseSemanticReasoningProvider
+from app.services.freshness.service import FreshnessService, filter_temporally_eligible_evidence
+from app.services.evidence_retrieval.clustering import cluster_evidence_records
 from app.services.reporting.service import ReportingService
 from app.storage.repository import report_repo
 
@@ -38,8 +41,10 @@ logger = logging.getLogger(__name__)
 class EpoClaimPipeline:
     """Master pipeline orchestrating all EpoClaim subsystems."""
 
-    def __init__(self):
-        self.extractor = ClaimExtractionService()
+    def __init__(self, semantic_provider: Optional[BaseSemanticReasoningProvider] = None):
+        self.verifier = ClaimVerificationService()
+        self.semantic_provider = semantic_provider or getattr(self.verifier, "_bifrost_provider", None)
+        self.extractor = ClaimExtractionService(semantic_provider=self.semantic_provider)
         self.normalizer = ClaimNormalizationService()
         self.temporal_analyzer = TemporalAnalysisService()
         self.researcher = EvidenceResearchService()
@@ -47,9 +52,8 @@ class EpoClaimPipeline:
         self.dense = DenseRetriever()
         self.segmenter = EvidenceSegmentationService()
         self.reranker = NLIReranker()
-        self.verifier = ClaimVerificationService()
         self.freshness = FreshnessService()
-        self.reporting = ReportingService()
+        self.reporting = ReportingService(semantic_provider=self.semantic_provider)
 
     async def run(self, request: AnalyzeRequest) -> FinalReport:
         """Execute end-to-end analysis on an AI-generated answer."""
@@ -80,6 +84,10 @@ class EpoClaimPipeline:
             for idx, doc_item in enumerate(request.context_documents, start=1):
                 segmented_records = self.segmenter.segment_document(doc_item, doc_index=idx)
                 local_evidence.extend(segmented_records)
+            # Apply clustering and deduplication to local context records as well
+            if local_evidence:
+                rep_records, _ = cluster_evidence_records(local_evidence)
+                local_evidence = rep_records
 
         # 5. Live Web Evidence Research (if enabled and requested)
         web_evidence: List[EvidenceRecord] = []
@@ -130,8 +138,21 @@ class EpoClaimPipeline:
             reranked_pairs = self.reranker.rerank(claim, fused_records, top_n=8)
             filtered_records = [r for r, _ in reranked_pairs]
 
+            # Filter evidence for temporal eligibility under requested temporal_evaluation_mode
+            eval_mode = request.temporal_evaluation_mode or "default"
+            eligible_records = filter_temporally_eligible_evidence(
+                filtered_records,
+                mode=eval_mode,
+                as_known_cutoff=request.as_known_cutoff,
+                target_event_time=request.target_event_time,
+            )
+
             # 3-Way NLI Verification
-            v_res, sup, contra = self.verifier.verify_claim(claim, filtered_records)
+            v_res, sup, contra = self.verifier.verify_claim(
+                claim,
+                eligible_records,
+                enable_correlation_discounting=request.enable_correlation_discounted_scoring,
+            )
 
             # Freshness Engine & Temporal Supersedence
             claim_ref = self.temporal_analyzer.get_reference_timestamp(claim, ref_dt)
@@ -176,7 +197,22 @@ class EpoClaimPipeline:
         }
 
         # 7. Report Compilation
-        report = self.reporting.generate_report(request.response_text, claim_details, metadata)
+        scoring_formula = (
+            "cluster_capped_experimental"
+            if (
+                request.enable_correlation_discounted_scoring
+                if request.enable_correlation_discounted_scoring is not None
+                else settings.enable_correlation_discounted_scoring
+            )
+            else "baseline"
+        )
+        report = self.reporting.generate_report(
+            request.response_text,
+            claim_details,
+            metadata,
+            scoring_mode=scoring_formula,
+            temporal_evaluation_mode=request.temporal_evaluation_mode or "default",
+        )
 
         # 8. Persistence
         try:

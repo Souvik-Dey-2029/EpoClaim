@@ -5,6 +5,8 @@ from enum import Enum
 from typing import Optional
 from pydantic import BaseModel, Field
 
+from app.schemas.evidence import TemporalInterval
+
 
 class TemporalSensitivity(str, Enum):
     """Categorization of how quickly a factual claim becomes vulnerable to change."""
@@ -19,6 +21,17 @@ class PropositionPolarity(str, Enum):
     NEGATIVE = "NEGATIVE"
 
 
+class EpistemicModality(str, Enum):
+    """Epistemic modality or communicative framing of the assertion."""
+    ASSERTED = "ASSERTED"
+    POSSIBLE = "POSSIBLE"
+    CONDITIONAL = "CONDITIONAL"
+    ALLEGED = "ALLEGED"
+    REPORTED = "REPORTED"
+    PLANNED = "PLANNED"
+    UNKNOWN = "UNKNOWN"
+
+
 class StructuredProposition(BaseModel):
     """Granular, atomic factual proposition decomposed from a parent claim or sentence."""
     proposition_id: str = Field(..., description="Unique identifier for the proposition (e.g. 'prop_123')")
@@ -29,10 +42,17 @@ class StructuredProposition(BaseModel):
     object: str = Field(default="", description="Target entity, attribute value, or state asserted")
     qualifiers: dict = Field(default_factory=dict, description="Contextual qualifiers (contrast, condition, modality)")
     polarity: PropositionPolarity = Field(default=PropositionPolarity.POSITIVE, description="Positive or negative polarity")
+    modality: EpistemicModality = Field(default=EpistemicModality.ASSERTED, description="Epistemic modality of the assertion")
     temporal_scope: Optional[str] = Field(default=None, description="Explicit or inferred time window / validity")
     related_entities: list[str] = Field(default_factory=list, description="Extracted named entities in this proposition")
     original_text_span: str = Field(..., description="Verbatim text span corresponding to this proposition")
+    start_char: Optional[int] = Field(default=None, description="Start character index of original_text_span in parent sentence/claim")
+    end_char: Optional[int] = Field(default=None, description="End character index of original_text_span in parent sentence/claim")
     extraction_confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Confidence in decomposition")
+    asserted_valid_time: Optional[TemporalInterval] = Field(
+        default=None,
+        description="Temporal validity interval asserted by this proposition"
+    )
 
 
 class AtomicClaim(BaseModel):
@@ -63,5 +83,9 @@ class AtomicClaim(BaseModel):
     propositions: list[StructuredProposition] = Field(
         default_factory=list,
         description="Decomposed atomic propositions underpinning this claim"
+    )
+    asserted_valid_time: Optional[TemporalInterval] = Field(
+        default=None,
+        description="Temporal validity interval asserted by this claim"
     )
 

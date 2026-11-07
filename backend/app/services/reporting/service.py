@@ -10,13 +10,15 @@ from app.schemas.freshness import FreshnessResult
 from app.schemas.report import FinalReport, ClaimAnalysisDetail
 from app.schemas.correction import GroundedCorrection
 from app.services.correction.service import AnswerCorrectionService
+from app.services.claim_verification.llm_interface import BaseSemanticReasoningProvider
 
 
 class ReportingService:
     """Compiles individual claim analyses into a unified structured FinalReport."""
 
-    def __init__(self):
-        self.correction_service = AnswerCorrectionService()
+    def __init__(self, semantic_provider: Optional[BaseSemanticReasoningProvider] = None):
+        self.semantic_provider = semantic_provider
+        self.correction_service = AnswerCorrectionService(semantic_provider=self.semantic_provider)
 
     def generate_report(
         self,
@@ -24,6 +26,8 @@ class ReportingService:
         claim_details: List[ClaimAnalysisDetail],
         execution_metadata: Dict[str, object] | None = None,
         grounded_correction: Optional[GroundedCorrection] = None,
+        scoring_mode: str = "baseline",
+        temporal_evaluation_mode: str = "default",
     ) -> FinalReport:
         report_id = f"epo_{uuid.uuid4().hex[:10]}"
         total = len(claim_details)
@@ -80,6 +84,8 @@ class ReportingService:
             claim_results=claim_details,
             evidence_sources=list(unique_sources.values()),
             grounded_correction=correction,
+            scoring_mode=scoring_mode,
+            temporal_evaluation_mode=temporal_evaluation_mode,
             execution_metadata=execution_metadata or {},
         )
 

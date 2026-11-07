@@ -44,11 +44,42 @@ class Settings(BaseSettings):
     anthropic_api_key: str = ""
     enable_hf_models: bool = False  # Keep false by default to prevent large automatic downloads
 
+    # Phase 3B Bifrost & LLM Semantic Assessment
+    enable_llm_semantic_assessment: bool = False
+    bifrost_base_url: str = Field(
+        default="",
+        validation_alias=AliasChoices("EPOCLAIM_BIFROST_BASE_URL", "BIFROST_BASE_URL"),
+        description="Base URL for Bifrost or OpenAI-compatible gateway (e.g. http://localhost:8080/v1)"
+    )
+    bifrost_model: str = Field(
+        default="gpt-4o-mini",
+        validation_alias=AliasChoices("EPOCLAIM_BIFROST_MODEL", "BIFROST_MODEL"),
+        description="Target model identifier routed by Bifrost"
+    )
+    bifrost_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("EPOCLAIM_BIFROST_API_KEY", "BIFROST_API_KEY"),
+        description="Optional API key / token for Bifrost"
+    )
+    bifrost_timeout_seconds: float = 10.0
+    bifrost_max_batch_evidence: int = 10
+    bifrost_max_retries: int = 1
+
     # Freshness Parameters
     default_half_life_hours: float = 168.0  # 7 days
     rrf_k: int = 60
     entailment_threshold: float = 0.65
     contradiction_threshold: float = 0.60
+    enable_correlation_discounted_scoring: bool = False  # Phase 2B correlation-aware aggregation (production default: False)
+
+    # Phase 3C: Hybrid LLM Claim Decomposition
+    enable_llm_claim_decomposition: bool = False
+    claim_decomposition_complexity_threshold: float = 0.5
+    claim_decomposition_timeout_seconds: float = 5.0
+
+    # Phase 3D: LLM-Assisted Proposition-Level Grounded Correction
+    enable_llm_answer_correction: bool = False
+    answer_correction_timeout_seconds: float = 8.0
 
     model_config = SettingsConfigDict(
         env_prefix="EPOCLAIM_",

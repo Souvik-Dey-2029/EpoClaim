@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from enum import Enum
-from typing import Optional
+from typing import Any, Optional
 from pydantic import BaseModel, Field
 
 from app.core.temporal import utc_now
@@ -15,6 +15,90 @@ class RetrievalMethod(str, Enum):
     HYBRID_RRF = "hybrid_rrf"
     TAVILY_SEARCH = "tavily_search"
     KNOWLEDGE_BASE = "knowledge_base"
+
+
+class TemporalPrecision(str, Enum):
+    """Precision level for temporal intervals and point occurrences."""
+    INSTANT = "INSTANT"
+    DAY = "DAY"
+    MONTH = "MONTH"
+    YEAR = "YEAR"
+    UNKNOWN = "UNKNOWN"
+
+
+class TemporalIntervalStatus(str, Enum):
+    """Boundary nature of a temporal interval."""
+    KNOWN_INTERVAL = "KNOWN_INTERVAL"
+    OPEN_START = "OPEN_START"
+    OPEN_END = "OPEN_END"
+    UNKNOWN = "UNKNOWN"
+
+
+class PublicationTimeSource(str, Enum):
+    """Origin and provenance of the publication timestamp."""
+    PROVIDER_SUPPLIED = "PROVIDER_SUPPLIED"
+    DOCUMENT_METADATA = "DOCUMENT_METADATA"
+    EXTRACTED_FROM_TEXT = "EXTRACTED_FROM_TEXT"
+    INFERRED = "INFERRED"
+    UNKNOWN = "UNKNOWN"
+
+
+class SourceRelationshipType(str, Enum):
+    """Cluster membership or provenance relationship between evidence sources."""
+    SAME_CANONICAL_DOCUMENT = "SAME_CANONICAL_DOCUMENT"
+    EXACT_COPY = "EXACT_COPY"
+    NEAR_DUPLICATE = "NEAR_DUPLICATE"
+    EXPLICITLY_SYNDICATED = "EXPLICITLY_SYNDICATED"
+    UNKNOWN_RELATIONSHIP = "UNKNOWN_RELATIONSHIP"
+
+
+class TemporalEligibilityStatus(str, Enum):
+    """Temporal admissibility of an evidence item for a given evaluation mode/target."""
+    ELIGIBLE = "ELIGIBLE"
+    INELIGIBLE = "INELIGIBLE"
+    UNKNOWN = "UNKNOWN"
+
+
+class TemporalInterval(BaseModel):
+    """Half-open [start_time, end_time) UTC temporal interval representing validity."""
+    start_time: Optional[datetime] = Field(default=None, description="Start boundary in UTC (inclusive by default)")
+    end_time: Optional[datetime] = Field(default=None, description="End boundary in UTC (exclusive by default)")
+    start_inclusive: bool = Field(default=True, description="Whether start boundary is inclusive")
+    end_inclusive: bool = Field(default=False, description="Whether end boundary is inclusive")
+    precision: TemporalPrecision = Field(default=TemporalPrecision.UNKNOWN, description="Temporal granularity")
+    temporal_status: TemporalIntervalStatus = Field(default=TemporalIntervalStatus.UNKNOWN, description="Boundary status")
+
+    def contains(self, dt: datetime) -> bool:
+        """Check if a datetime falls within this temporal interval.
+        
+        If temporal_status is UNKNOWN or both start_time and end_time are None,
+        it does NOT imply infinite validity; it returns False (unknown validity cannot contain with certainty).
+        """
+        if dt is None:
+            return False
+        if self.temporal_status == TemporalIntervalStatus.UNKNOWN and self.start_time is None and self.end_time is None:
+            return False
+        if self.start_time is None and self.end_time is None:
+            return False
+        # Normalize naive dt to UTC if needed
+        dt_val = dt
+        if self.start_time is not None:
+            st = self.start_time
+            if self.start_inclusive:
+                if dt_val < st:
+                    return False
+            else:
+                if dt_val <= st:
+                    return False
+        if self.end_time is not None:
+            et = self.end_time
+            if self.end_inclusive:
+                if dt_val > et:
+                    return False
+            else:
+                if dt_val >= et:
+                    return False
+        return True
 
 
 class EvidenceRecord(BaseModel):
@@ -65,4 +149,48 @@ class EvidenceRecord(BaseModel):
         default=RetrievalMethod.HYBRID_RRF.value,
         description="Retrieval channel or fusion method that yielded this item"
     )
+    
+    # Phase 2B Bitemporal & Provenance Extensions
+    canonical_url: Optional[str] = Field(default=None, description="Resolved canonical URL of the document")
+    root_source_id: Optional[str] = Field(default=None, description="Identifier of cluster root source document")
+    source_version_id: Optional[str] = Field(default=None, description="Identifier of specific source revision/snapshot")
+    publication_time: Optional[datetime] = Field(
+        default=None,
+        description="Explicit publication timestamp (synced with publication_date)"
+    )
+    publication_time_source: PublicationTimeSource = Field(
+        default=PublicationTimeSource.UNKNOWN,
+        description="Provenance of how publication_time was acquired"
+    )
+    transaction_time: Optional[datetime] = Field(
+        default=None,
+        description="Timestamp when EpoClaim committed this record to persistence"
+    )
+    content_hash: Optional[str] = Field(
+        default=None,
+        description="SHA-256 hash of verbatim citation_text/content"
+    )
+    normalized_content_hash: Optional[str] = Field(
+        default=None,
+        description="SHA-256 hash of normalized content (lowercased, stripped whitespace/punctuation)"
+    )
+    asserted_valid_time: Optional[TemporalInterval] = Field(
+        default=None,
+        description="Real-world valid time interval asserted by the evidence proposition"
+    )
+    temporal_eligibility: TemporalEligibilityStatus = Field(
+        default=TemporalEligibilityStatus.ELIGIBLE,
+        description="Eligibility of this evidence for verification under current evaluation mode"
+    )
+    relationship_type: SourceRelationshipType = Field(
+        default=SourceRelationshipType.UNKNOWN_RELATIONSHIP,
+        description="Relationship to canonical or syndicated document"
+    )
+
+    def model_post_init(self, __context: Any) -> None:
+        # Keep publication_time and publication_date synchronized
+        if self.publication_time is not None and self.publication_date is None:
+            self.publication_date = self.publication_time
+        elif self.publication_date is not None and self.publication_time is None:
+            self.publication_time = self.publication_date
 

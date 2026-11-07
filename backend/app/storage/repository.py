@@ -8,6 +8,7 @@ from pathlib import Path
 
 from app.schemas.report import FinalReport
 from app.core.config import settings
+from app.core.temporal import utc_now
 
 
 class ReportRepository:
@@ -61,6 +62,19 @@ class ReportRepository:
 
     def save_report(self, report: FinalReport) -> None:
         """Save or replace a report in the database."""
+        # Ensure transaction_time is stamped on committed evidence records if missing
+        now_utc = utc_now()
+        for ev in report.evidence_sources:
+            if ev.transaction_time is None:
+                ev.transaction_time = now_utc
+        for cr in report.claim_results:
+            for ev in cr.supporting_evidence:
+                if ev.transaction_time is None:
+                    ev.transaction_time = now_utc
+            for ev in cr.contradicting_evidence:
+                if ev.transaction_time is None:
+                    ev.transaction_time = now_utc
+
         with self._get_connection() as conn:
             conn.execute(
                 """

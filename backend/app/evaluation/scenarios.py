@@ -233,5 +233,191 @@ def get_default_benchmark_scenarios() -> List[EvaluationScenario]:
                 }
             ],
         ),
+        # --- Phase 2B Deterministic Scenarios (scen_11 to scen_18) ---
+        EvaluationScenario(
+            scenario_id="scen_11_historical_fact_old_source",
+            entity="Battle of Hastings",
+            attribute="year of occurrence",
+            old_value="1066",
+            new_value="1066",
+            change_date="1066-10-14T00:00:00Z",
+            query="In what year did the Battle of Hastings occur?",
+            original_claim="The Battle of Hastings was fought in 1066.",
+            updated_claim="The Battle of Hastings was fought in 1066.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "Medieval History Archives",
+                    "content": "The Battle of Hastings was fought on 14 October 1066 between the Norman-French army and the English army.",
+                    "published_date": "2005-01-01T00:00:00Z",
+                }
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_12_recent_source_describes_old_event",
+            entity="Magna Carta",
+            attribute="granting year",
+            old_value="1215",
+            new_value="1215",
+            change_date="1215-06-15T00:00:00Z",
+            query="When was the Magna Carta granted?",
+            original_claim="The Magna Carta was originally issued in 1215.",
+            updated_claim="The Magna Carta was originally issued in 1215.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "Historical Retrospective (2026 Analysis)",
+                    "content": "In a 2026 retrospective on constitutional history, scholars reaffirm that Magna Carta was granted by King John in 1215.",
+                    "published_date": "2026-03-01T00:00:00Z",
+                }
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_13_point_in_time_inside_interval",
+            entity="Barack Obama",
+            attribute="US Presidency status in 2012",
+            old_value="President of the United States",
+            new_value="President of the United States",
+            change_date="2012-06-01T00:00:00Z",
+            query="Was Barack Obama the President of the United States in 2012?",
+            original_claim="Barack Obama was the President of the United States in 2012.",
+            updated_claim="Barack Obama was the President of the United States in 2012.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "White House Presidential Archives",
+                    "content": "Barack Obama served as the 44th President of the United States from January 20, 2009 to January 20, 2017.",
+                    "published_date": "2017-01-20T00:00:00Z",
+                }
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_14_point_in_time_outside_interval",
+            entity="Barack Obama",
+            attribute="US Presidency status in 2024",
+            old_value="President of the United States",
+            new_value="former President",
+            change_date="2024-01-01T00:00:00Z",
+            query="Was Barack Obama the President of the United States in 2024?",
+            original_claim="Barack Obama was the President of the United States in 2024.",
+            updated_claim="Barack Obama concluded his presidency in 2017.",
+            expected_stale_verdict="CONTRADICTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "US History Records",
+                    "content": "Barack Obama concluded his two terms as President on January 20, 2017 and was succeeded by Donald Trump.",
+                    "published_date": "2024-01-01T00:00:00Z",
+                }
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_15_syndicated_reprints_inflation",
+            entity="Alpha Tech",
+            attribute="acquisition price",
+            old_value="acquired for 1 billion dollars",
+            new_value="acquired for 1 billion dollars",
+            change_date="2024-05-01T00:00:00Z",
+            query="What was Alpha Tech acquired for?",
+            original_claim="Alpha Tech was acquired for 1 billion dollars.",
+            updated_claim="Alpha Tech was acquired for 1 billion dollars.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "Wire Service Release",
+                    "content": "Alpha Tech was acquired for 1 billion dollars in an all-cash transaction.",
+                    "source_url": "https://wire.example.com/alpha-tech-deal",
+                    "published_date": "2024-05-01T10:00:00Z",
+                },
+                {
+                    "title": "Tech Tribune Syndicated Copy",
+                    "content": "Alpha Tech was acquired for 1 billion dollars in an all-cash transaction.",
+                    "source_url": "https://tribune.example.com/reprint/alpha-tech-deal?utm_source=rss",
+                    "published_date": "2024-05-01T10:05:00Z",
+                },
+                {
+                    "title": "Market Watch Mirror Copy",
+                    "content": "Alpha Tech was acquired for 1 billion dollars in an all-cash transaction.",
+                    "source_url": "https://market.example.com/syndicated/alpha-tech-deal",
+                    "published_date": "2024-05-01T10:15:00Z",
+                },
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_16_independent_sources_agreement",
+            entity="Quantum Corp",
+            attribute="headquarters location",
+            old_value="Zurich",
+            new_value="Zurich",
+            change_date="2023-01-01T00:00:00Z",
+            query="Where is Quantum Corp headquartered?",
+            original_claim="Quantum Corp is headquartered in Zurich.",
+            updated_claim="Quantum Corp is headquartered in Zurich.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "Swiss Commercial Registry",
+                    "content": "Quantum Corp maintains its official corporate seat and headquarters in Zurich, Switzerland.",
+                    "source_url": "https://zefix.ch/entry/quantum-corp",
+                    "published_date": "2023-01-01T00:00:00Z",
+                },
+                {
+                    "title": "Financial Times Swiss Tech Profile",
+                    "content": "From its headquarters in Zurich, Quantum Corp develops high-precision sensors.",
+                    "source_url": "https://ft.example.com/tech/quantum-zurich",
+                    "published_date": "2023-06-15T00:00:00Z",
+                },
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_17_system_as_known_cutoff_protection",
+            entity="Nova Dynamics",
+            attribute="lead researcher",
+            old_value="Dr. Alice Smith",
+            new_value="Dr. Bob Jones",
+            change_date="2024-06-01T00:00:00Z",
+            query="Who is the lead researcher at Nova Dynamics?",
+            original_claim="Dr. Alice Smith is the lead researcher at Nova Dynamics.",
+            updated_claim="Dr. Bob Jones succeeded Dr. Alice Smith at Nova Dynamics.",
+            expected_stale_verdict="OUTDATED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "Research Team 2023",
+                    "content": "Dr. Alice Smith is the lead researcher heading robotics at Nova Dynamics.",
+                    "published_date": "2023-05-01T00:00:00Z",
+                },
+                {
+                    "title": "Research Team 2024 Announcement",
+                    "content": "Dr. Bob Jones has been appointed lead researcher, replacing Dr. Alice Smith.",
+                    "published_date": "2024-06-01T00:00:00Z",
+                },
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_18_uncertain_temporal_bounds_honesty",
+            entity="Starlight Energy",
+            attribute="commercial fusion reactor deployment",
+            old_value="operational in late 2025",
+            new_value="uncertain deployment timeline",
+            change_date="2025-01-01T00:00:00Z",
+            query="When will Starlight Energy deploy its commercial fusion reactor?",
+            original_claim="Starlight Energy deployed an operational commercial fusion reactor in late 2025.",
+            updated_claim="Starlight Energy announced planned testing without confirmed operational deployment.",
+            expected_stale_verdict="INSUFFICIENT_EVIDENCE",
+            expected_fresh_verdict="INSUFFICIENT_EVIDENCE",
+            context_docs=[
+                {
+                    "title": "Press Speculation",
+                    "content": "Clean energy executives and external analysts discussed speculative hopes for future fusion milestones.",
+                    "published_date": None,
+                }
+            ],
+        ),
     ]
 

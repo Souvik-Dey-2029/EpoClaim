@@ -8,7 +8,7 @@ and contradicting evidence sets.
 from __future__ import annotations
 
 import logging
-from typing import List, Tuple
+from typing import Dict, List, Optional, Tuple
 from app.schemas.claims import AtomicClaim, StructuredProposition
 from app.schemas.evidence import EvidenceRecord
 from app.schemas.verification import VerificationVerdict, VerificationResult, PropositionVerificationResult
@@ -18,11 +18,19 @@ from app.services.claim_verification.scoring import (
     deduplicate_evidence_records,
     calculate_evidence_weights,
     aggregate_evidence_scores,
+    aggregate_cluster_evidence_scores,
 )
+from app.services.evidence_retrieval.clustering import cluster_evidence_records
 from app.services.claim_verification.llm_interface import (
     BaseSemanticReasoningProvider,
     UnavailableSemanticProvider,
+    BatchAssessmentRequest,
+    BatchAssessmentResponse,
+    BatchPropositionItem,
+    BatchEvidenceItem,
+    AssessmentRelation,
 )
+from app.services.claim_verification.providers.factory import get_configured_semantic_provider
 
 logger = logging.getLogger(__name__)
 
@@ -34,8 +42,108 @@ class ClaimVerificationService:
         self._cross_encoder = None
         self._load_failed = False
         self.semantic_engine = GeneralSemanticVerifier()
-        # Explicit provider interface: unconfigured until Bifrost is connected
-        self.semantic_provider = semantic_provider or UnavailableSemanticProvider()
+        # Explicit provider interface: instantiated via factory unless injected
+        self.semantic_provider = semantic_provider or get_configured_semantic_provider()
+
+    def _run_async_safely(self, coro):
+        """Safely execute an async coroutine from synchronous or asynchronous contexts."""
+        import asyncio
+        import concurrent.futures
+        try:
+            loop = asyncio.get_running_loop()
+        except RuntimeError:
+            loop = None
+
+        if loop and loop.is_running():
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
+                return pool.submit(asyncio.run, coro).result()
+        else:
+            return asyncio.run(coro)
+
+    def _map_llm_relation_to_scores(
+        self,
+        relation: AssessmentRelation,
+        confidence: float,
+    ) -> Tuple[float, float, float]:
+        """Convert categorical LLM relation and confidence to (entailment, contradiction, neutral) scores.
+
+        Operational heuristic mapping:
+        - SUPPORTS(c): e = c, c_con = (1-c)/2, neu = (1-c)/2
+        - CONTRADICTS(c): c_con = c, e = (1-c)/2, neu = (1-c)/2
+        - NEUTRAL(c): neu = c, e = (1-c)/2, c_con = (1-c)/2
+        - INSUFFICIENT: neu = 1.0, e = 0.0, c_con = 0.0
+        """
+        c = max(0.0, min(1.0, float(confidence)))
+        rem = (1.0 - c) / 2.0
+
+        if relation == AssessmentRelation.SUPPORTS:
+            return round(c, 4), round(rem, 4), round(rem, 4)
+        elif relation == AssessmentRelation.CONTRADICTS:
+            return round(rem, 4), round(c, 4), round(rem, 4)
+        elif relation == AssessmentRelation.NEUTRAL:
+            return round(rem, 4), round(rem, 4), round(c, 4)
+        else: # INSUFFICIENT
+            return 0.0, 0.0, 1.0
+
+    async def _evaluate_llm_batch(
+        self,
+        claim_id: str,
+        propositions: List[StructuredProposition],
+        evidence_records: List[EvidenceRecord],
+    ) -> Dict[Tuple[str, str], Tuple[float, float, float]]:
+        """Query semantic_provider with bounded batches and return (p_id, ev_id) -> (e, c, n) map."""
+        if not self.semantic_provider or not self.semantic_provider.is_available:
+            return {}
+
+        batch_size = max(1, settings.bifrost_max_batch_evidence)
+        prop_items = [
+            BatchPropositionItem(
+                proposition_id=p.proposition_id,
+                subject=p.subject,
+                predicate=p.predicate,
+                object=p.object,
+                qualifiers=p.qualifiers,
+                polarity=p.polarity.value if hasattr(p.polarity, "value") else str(p.polarity),
+                temporal_scope=p.temporal_scope,
+                original_text_span=p.original_text_span,
+            )
+            for p in propositions
+        ]
+
+        results_map: Dict[Tuple[str, str], Tuple[float, float, float]] = {}
+
+        # Chunk evidence items into bounded batches
+        for i in range(0, len(evidence_records), batch_size):
+            ev_chunk = evidence_records[i : i + batch_size]
+            ev_items = [
+                BatchEvidenceItem(
+                    evidence_id=e.evidence_id,
+                    source_title=e.source_title,
+                    source_url=e.source_url,
+                    source_snippet=e.citation_text,
+                    published_date=e.publication_date.isoformat() if e.publication_date else None,
+                )
+                for e in ev_chunk
+            ]
+
+            req = BatchAssessmentRequest(
+                claim_id=claim_id,
+                propositions=prop_items,
+                evidence_items=ev_items,
+            )
+
+            try:
+                resp: BatchAssessmentResponse = await self.semantic_provider.batch_assess_evidence(req)
+                for ass in resp.assessments:
+                    scores = self._map_llm_relation_to_scores(ass.relation, ass.confidence)
+                    results_map[(ass.proposition_id, ass.evidence_id)] = scores
+            except Exception as exc:
+                logger.warning(
+                    f"LLM batch assessment failed for chunk {i // batch_size + 1}: {exc}; "
+                    "falling back to deterministic evaluation."
+                )
+
+        return results_map
 
     def _get_model(self):
         if not settings.enable_hf_models:
@@ -54,8 +162,15 @@ class ClaimVerificationService:
         self,
         claim: AtomicClaim,
         evidence_records: List[EvidenceRecord],
+        enable_correlation_discounting: Optional[bool] = None,
     ) -> Tuple[VerificationResult, List[EvidenceRecord], List[EvidenceRecord]]:
         """Verify an atomic claim against evidence records.
+
+        Args:
+            claim: Atomic claim or compound claim
+            evidence_records: List of candidate evidence records
+            enable_correlation_discounting: If True, uses cluster-capped scoring.
+                                            If False or None, respects settings.enable_correlation_discounted_scoring.
 
         Returns:
             Tuple of (VerificationResult, supporting_evidence_list, contradicting_evidence_list)
@@ -84,11 +199,39 @@ class ClaimVerificationService:
 
         model = self._get_model()
 
+        # If LLM semantic assessment is available, run batched evaluation for propositions or claim
+        llm_scores_map: Dict[Tuple[str, str], Tuple[float, float, float]] = {}
+        if self.semantic_provider and self.semantic_provider.is_available:
+            props_to_eval = (
+                claim.propositions
+                if (claim.propositions and len(claim.propositions) > 0)
+                else [
+                    StructuredProposition(
+                        proposition_id=f"prop_{claim.claim_id}",
+                        parent_claim_id=claim.claim_id,
+                        source_claim_id=claim.claim_id,
+                        subject=claim.entity or "Entity",
+                        predicate=claim.attribute or "asserts",
+                        object=claim.claimed_value or claim.normalized_text,
+                        original_text_span=claim.normalized_text,
+                    )
+                ]
+            )
+            llm_scores_map = self._run_async_safely(
+                self._evaluate_llm_batch(claim.claim_id, props_to_eval, clean_records)
+            )
+
         # Collect (e_i, c_i, n_i, r_i, q_i) for independent probabilistic aggregation
         evidence_triples: List[Tuple[float, float, float, float, float]] = []
 
         for rec in clean_records:
-            ent, contra, neu = self._score_pair(claim, rec, model)
+            # Check LLM score for claim-level pseudo proposition if single, or score pair directly
+            ent, contra, neu = None, None, None
+            pseudo_key = (f"prop_{claim.claim_id}", rec.evidence_id)
+            if pseudo_key in llm_scores_map:
+                ent, contra, neu = llm_scores_map[pseudo_key]
+            else:
+                ent, contra, neu = self._score_pair(claim, rec, model)
 
             r_i = getattr(rec, "relevance_score", 0.8) or 0.8
             q_i = getattr(rec, "source_quality", 0.9) or 0.9
@@ -101,7 +244,27 @@ class ClaimVerificationService:
                 contradicting.append(rec)
 
         # 2. Compute aggregate heuristic support (S) and contradiction (C) scores
-        agg_support, agg_contra = aggregate_evidence_scores(evidence_triples)
+        use_cluster_scoring = (
+            enable_correlation_discounting
+            if enable_correlation_discounting is not None
+            else settings.enable_correlation_discounted_scoring
+        )
+
+        if use_cluster_scoring:
+            # Group evidence by cluster and compute capped scores
+            _, clusters = cluster_evidence_records(clean_records)
+            cluster_triples: List[List[Tuple[float, float, float, float, float]]] = []
+            for cl in clusters:
+                c_triples: List[Tuple[float, float, float, float, float]] = []
+                for m in cl.members:
+                    ent, contra, neu = self._score_pair(claim, m, model)
+                    r_i = getattr(m, "relevance_score", 0.8) or 0.8
+                    q_i = getattr(m, "source_quality", 0.9) or 0.9
+                    c_triples.append((ent, contra, neu, r_i, q_i))
+                cluster_triples.append(c_triples)
+            agg_support, agg_contra = aggregate_cluster_evidence_scores(cluster_triples)
+        else:
+            agg_support, agg_contra = aggregate_evidence_scores(evidence_triples)
 
         # 3. Formulate verdict
         if supporting and not contradicting:
@@ -145,7 +308,7 @@ class ClaimVerificationService:
 
         # 4. If claim contains structured propositions, verify each independently and aggregate parent verdict
         if claim.propositions and len(claim.propositions) > 1:
-            prop_results = self.verify_propositions(claim.propositions, clean_records, model)
+            prop_results = self.verify_propositions(claim.propositions, clean_records, model, llm_scores_map=llm_scores_map)
             result.proposition_results = prop_results
 
             # Compute aggregated parent verdict based on proposition outcomes
@@ -161,9 +324,11 @@ class ClaimVerificationService:
         propositions: List[StructuredProposition],
         evidence_records: List[EvidenceRecord],
         model,
+        llm_scores_map: Optional[Dict[Tuple[str, str], Tuple[float, float, float]]] = None,
     ) -> List[PropositionVerificationResult]:
         """Verify each atomic proposition independently against evidence records."""
         results: List[PropositionVerificationResult] = []
+        scores_lookup = llm_scores_map or {}
 
         for prop in propositions:
             prop_sup: List[str] = []
@@ -172,7 +337,12 @@ class ClaimVerificationService:
             prop_triples: List[Tuple[float, float, float, float, float]] = []
 
             for rec in evidence_records:
-                ent, contra, neu = self._score_proposition_pair(prop, rec, model)
+                key = (prop.proposition_id, rec.evidence_id)
+                if key in scores_lookup:
+                    ent, contra, neu = scores_lookup[key]
+                else:
+                    ent, contra, neu = self._score_proposition_pair(prop, rec, model)
+
                 r_i = getattr(rec, "relevance_score", 0.8) or 0.8
                 q_i = getattr(rec, "source_quality", 0.9) or 0.9
                 prop_triples.append((ent, contra, neu, r_i, q_i))

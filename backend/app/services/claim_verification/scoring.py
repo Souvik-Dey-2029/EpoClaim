@@ -103,3 +103,49 @@ def aggregate_evidence_scores(
 
     return round(max(0.0, min(1.0, s_score)), 4), round(max(0.0, min(1.0, c_score)), 4)
 
+
+def aggregate_cluster_evidence_scores(
+    cluster_triples: List[List[Tuple[float, float, float, float, float]]],
+) -> Tuple[float, float]:
+    """Aggregate evidence scores using correlation-discounted, cluster-capped independent evidence.
+
+    For cluster k with items i in k:
+        W_{support, k} = max_{i in k}(w_{support, i})
+        W_{contra, k} = max_{i in k}(w_{contra, i})
+
+    Across clusters:
+        S_{cluster} = 1 - PRODUCT_{k=1}^K (1 - W_{support, k})
+        C_{cluster} = 1 - PRODUCT_{k=1}^K (1 - W_{contra, k})
+
+    Args:
+        cluster_triples: List of clusters, each containing a list of (e_i, c_i, n_i, r_i, q_i) triples.
+
+    Returns:
+        (S_cluster, C_cluster) clamped to [0.0, 1.0].
+    """
+    if not cluster_triples:
+        return 0.0, 0.0
+
+    prod_not_support = 1.0
+    prod_not_contra = 1.0
+
+    for cluster in cluster_triples:
+        if not cluster:
+            continue
+        max_w_sup = 0.0
+        max_w_con = 0.0
+        for e_i, c_i, n_i, r_i, q_i in cluster:
+            w_sup, w_con = calculate_evidence_weights(e_i, c_i, n_i, r_i, q_i)
+            if w_sup > max_w_sup:
+                max_w_sup = w_sup
+            if w_con > max_w_con:
+                max_w_con = w_con
+
+        prod_not_support *= (1.0 - max_w_sup)
+        prod_not_contra *= (1.0 - max_w_con)
+
+    s_score = 1.0 - prod_not_support
+    c_score = 1.0 - prod_not_contra
+
+    return round(max(0.0, min(1.0, s_score)), 4), round(max(0.0, min(1.0, c_score)), 4)
+

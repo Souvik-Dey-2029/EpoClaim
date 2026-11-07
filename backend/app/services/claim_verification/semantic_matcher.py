@@ -159,8 +159,13 @@ class GeneralSemanticVerifier:
                 # Defeated pattern: "X defeated [claim_entity]"
                 if re.search(rf"\b(?:defeated|beat)\s+{re.escape(c_ent_lower)}\b", e_norm):
                     return 0.05, 0.90, 0.05
-                # Stepped down pattern
+                # Stepped down / concluded pattern (only contradicts if claim was asserting active current role)
                 if c_ent_lower in e_norm and any(term in e_norm for term in ["stepped down", "resigned", "concluding", "concluded"]):
+                    if not any(term in claim_text.lower() for term in ["stepped down", "resigned", "concluding", "concluded"]):
+                        return 0.04, 0.92, 0.04
+
+                # Replaced pattern: "[other] replacing [claim_entity]" or "[claim_entity] replaced by [other]"
+                if re.search(rf"\breplacing\s+{re.escape(c_ent_lower)}\b", e_norm) or re.search(rf"\b{re.escape(c_ent_lower)}\s+(?:was\s+)?replaced\s+by\b", e_norm):
                     return 0.04, 0.92, 0.04
 
             # If evidence asserts someone else returned as / became the exclusive title holder
@@ -190,7 +195,7 @@ class GeneralSemanticVerifier:
         # 6. Check for distinct grammatical subject head mismatch (e.g. Alice vs Bob)
         # If the asserted subject entity does not appear anywhere in evidence, high overlap
         # on context alone (e.g. "researcher at Stanford") must not trigger entailment.
-        m_c = re.match(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b", claim_text.strip())
+        m_c = re.match(r"^(?:the\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b", claim_text.strip(), re.IGNORECASE)
         if m_c:
             c_head = m_c.group(1).lower()
             if c_head not in e_norm and not is_substring:

@@ -5,12 +5,19 @@ while preserving character spans and filtering out non-factual discourse.
 """
 from __future__ import annotations
 
+import asyncio
+import logging
 import re
 import uuid
-from typing import List, Tuple
+from typing import List, Optional, Tuple
+from app.core.config import settings
 from app.schemas.claims import AtomicClaim, TemporalSensitivity, StructuredProposition
 from app.core.security import sanitize_untrusted_text
 from app.services.claim_extraction.proposition_decomposer import PropositionDecompositionService
+from app.services.claim_extraction.complexity_detector import LinguisticComplexityDetector
+from app.services.claim_verification.llm_interface import BaseSemanticReasoningProvider, ExtractionRequest
+
+logger = logging.getLogger(__name__)
 
 # Patterns identifying non-factual conversational or meta sentences
 _DISCOURSE_PATTERNS = [
@@ -27,8 +34,63 @@ _SPLIT_REGEX = re.compile(r"(?<=[.!?])\s+|\n+")
 class ClaimExtractionService:
     """Extracts atomic factual claims with exact text span mappings and structured propositions."""
 
-    def __init__(self):
+    def __init__(self, semantic_provider: Optional[BaseSemanticReasoningProvider] = None):
         self.decomposer = PropositionDecompositionService()
+        self.complexity_detector = LinguisticComplexityDetector(
+            default_threshold=settings.claim_decomposition_complexity_threshold
+        )
+        self.semantic_provider = semantic_provider
+
+    def _decompose_with_provider_sync(
+        self,
+        claim_id: str,
+        cleaned_s: str,
+        inherited_entity: str,
+        timeout: float
+    ) -> Optional[List[StructuredProposition]]:
+        """Attempt LLM decomposition via semantic_provider synchronously (or running async event loop)."""
+        if not self.semantic_provider or not getattr(self.semantic_provider, "is_claim_decomposition_available", False):
+            return None
+
+        req = ExtractionRequest(
+            response_text=cleaned_s,
+            claim_id=claim_id,
+            sentence_text=cleaned_s,
+            extraction_version="v1"
+        )
+
+        async def _run_extract():
+            return await asyncio.wait_for(
+                self.semantic_provider.extract_structured_claims(req),
+                timeout=timeout
+            )
+
+        try:
+            # Check if there's already an active event loop in current thread
+            try:
+                loop = asyncio.get_running_loop()
+            except RuntimeError:
+                loop = None
+
+            if loop and loop.is_running():
+                # We are in an active event loop (e.g. running in async pipeline)
+                # To avoid blocking, create task and wait if in nested or run in thread
+                import concurrent.futures
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    resp = executor.submit(lambda: asyncio.run(_run_extract())).result(timeout=timeout + 1.0)
+            else:
+                resp = asyncio.run(_run_extract())
+
+            if resp and resp.propositions:
+                logger.info(
+                    f"Successfully decomposed complex claim {claim_id} into {len(resp.propositions)} propositions via {resp.provider_name}"
+                )
+                return resp.propositions
+        except Exception as exc:
+            logger.warning(
+                f"LLM claim decomposition failed or rejected for claim {claim_id}: {exc}. Falling back to deterministic decomposer."
+            )
+            return None
 
     def extract_claims(self, text: str) -> List[AtomicClaim]:
         """Extract atomic claims from the given text."""
@@ -50,13 +112,40 @@ class ClaimExtractionService:
 
             claim_id = f"clm_{uuid.uuid4().hex[:8]}"
             entity, attribute, value = self._heuristic_parse_triple(cleaned_s)
-            
-            # Decompose into structured atomic propositions
-            props = self.decomposer.decompose_claim(
-                parent_claim_id=claim_id,
-                text=cleaned_s,
-                inherited_entity=entity,
+
+            # Check linguistic complexity
+            complexity = self.complexity_detector.evaluate(
+                cleaned_s,
+                threshold=settings.claim_decomposition_complexity_threshold
             )
+
+            props: Optional[List[StructuredProposition]] = None
+
+            # Route to LLM only if:
+            # 1. Linguistic complexity meets threshold
+            # 2. Both enable_llm_semantic_assessment and enable_llm_claim_decomposition are True
+            # 3. Provider is configured and available
+            if (
+                complexity.is_complex
+                and settings.enable_llm_semantic_assessment
+                and settings.enable_llm_claim_decomposition
+                and self.semantic_provider
+                and getattr(self.semantic_provider, "is_claim_decomposition_available", False)
+            ):
+                props = self._decompose_with_provider_sync(
+                    claim_id=claim_id,
+                    cleaned_s=cleaned_s,
+                    inherited_entity=entity,
+                    timeout=settings.claim_decomposition_timeout_seconds
+                )
+
+            # Fallback to deterministic regex-based decomposition if props not obtained
+            if not props:
+                props = self.decomposer.decompose_claim(
+                    parent_claim_id=claim_id,
+                    text=cleaned_s,
+                    inherited_entity=entity,
+                )
 
             claims.append(
                 AtomicClaim(
