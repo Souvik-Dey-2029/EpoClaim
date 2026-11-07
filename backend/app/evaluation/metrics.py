@@ -116,11 +116,44 @@ def compute_freshness_metrics(
     # Recovery rate (fresh scenarios that succeeded)
     recovery_ci = wilson_score_interval(fresh_accepted, len(fresh_tests))
 
+    # Overall Parent Verdict Accuracy across all runs
+    total_passed = sum(1 for r in eval_results if r.get("passed") is True)
+    parent_accuracy = total_passed / max(1, total)
+    parent_accuracy_ci = wilson_score_interval(total_passed, total)
+
+    # Abstention / Insufficient Evidence Performance
+    insufficient_expected = [r for r in eval_results if r.get("expected_verdict") == "INSUFFICIENT_EVIDENCE"]
+    insufficient_correct = sum(1 for r in insufficient_expected if r.get("predicted_verdict") == "INSUFFICIENT_EVIDENCE")
+    abstention_rate = insufficient_correct / max(1, len(insufficient_expected)) if insufficient_expected else 1.0
+
+    # Categorical breakdown
+    categories = {}
+    for r in eval_results:
+        cat = r.get("scenario_id", "").split("_")[1] if "_" in r.get("scenario_id", "") else "general"
+        if cat not in categories:
+            categories[cat] = {"total": 0, "passed": 0}
+        categories[cat]["total"] += 1
+        if r.get("passed") is True:
+            categories[cat]["passed"] += 1
+
+    category_metrics = {
+        cat: {
+            "accuracy": round(data["passed"] / max(1, data["total"]), 4),
+            "passed": data["passed"],
+            "total": data["total"],
+        }
+        for cat, data in categories.items()
+    }
+
     return {
         "stale_detection_rate": round(stale_rate, 4),
         "fresh_acceptance_rate": round(fresh_rate, 4),
         "false_stale_detection_rate": round(false_stale_rate, 4),
         "recovery_rate": round(fresh_rate, 4),
         "recovery_rate_ci_95": (round(recovery_ci[0], 4), round(recovery_ci[1], 4)),
+        "parent_verdict_accuracy": round(parent_accuracy, 4),
+        "parent_verdict_accuracy_ci_95": (round(parent_accuracy_ci[0], 4), round(parent_accuracy_ci[1], 4)),
+        "abstention_rate": round(abstention_rate, 4),
+        "category_metrics": category_metrics,
     }
 

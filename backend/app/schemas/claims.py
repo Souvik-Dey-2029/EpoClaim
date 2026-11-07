@@ -13,8 +13,33 @@ class TemporalSensitivity(str, Enum):
     FAST_MOVING = "FAST_MOVING"            # Stock prices, sports scores, latest software versions, live events
 
 
+class PropositionPolarity(str, Enum):
+    """Semantic polarity of the proposition assertion."""
+    POSITIVE = "POSITIVE"
+    NEGATIVE = "NEGATIVE"
+
+
+class StructuredProposition(BaseModel):
+    """Granular, atomic factual proposition decomposed from a parent claim or sentence."""
+    proposition_id: str = Field(..., description="Unique identifier for the proposition (e.g. 'prop_123')")
+    parent_claim_id: str = Field(..., description="ID of the parent sentence or claim that produced this proposition")
+    source_claim_id: str = Field(..., description="Root source claim identifier for backward provenance")
+    subject: str = Field(..., description="Entity or concept the proposition is about")
+    predicate: str = Field(..., description="Action, relation, or attribute linking subject and object")
+    object: str = Field(default="", description="Target entity, attribute value, or state asserted")
+    qualifiers: dict = Field(default_factory=dict, description="Contextual qualifiers (contrast, condition, modality)")
+    polarity: PropositionPolarity = Field(default=PropositionPolarity.POSITIVE, description="Positive or negative polarity")
+    temporal_scope: Optional[str] = Field(default=None, description="Explicit or inferred time window / validity")
+    related_entities: list[str] = Field(default_factory=list, description="Extracted named entities in this proposition")
+    original_text_span: str = Field(..., description="Verbatim text span corresponding to this proposition")
+    extraction_confidence: float = Field(default=1.0, ge=0.0, le=1.0, description="Confidence in decomposition")
+
+
 class AtomicClaim(BaseModel):
-    """An individual atomic factual claim extracted from an AI-generated answer."""
+    """An individual factual claim extracted from an AI-generated answer.
+    
+    Can contain one or more granular StructuredPropositions when compound.
+    """
     claim_id: str = Field(..., description="Unique deterministic or UUID identifier for the claim")
     original_text: str = Field(..., description="Original verbatim text span from the source response")
     normalized_text: str = Field(..., description="Self-contained, decontextualized factual proposition")
@@ -35,4 +60,8 @@ class AtomicClaim(BaseModel):
     )
     start_char: Optional[int] = Field(default=None, description="Start character index in original response")
     end_char: Optional[int] = Field(default=None, description="End character index in original response")
+    propositions: list[StructuredProposition] = Field(
+        default_factory=list,
+        description="Decomposed atomic propositions underpinning this claim"
+    )
 

@@ -91,29 +91,48 @@ class EvidenceResearchService:
         if claim.temporal_sensitivity == TemporalSensitivity.TIME_INVARIANT:
             return None
 
+        # If claim contains decomposed propositions, generate targeted queries from propositions
+        queries = self.generate_proposition_queries(claim)
+        return queries[0] if queries else None
+
+    def generate_proposition_queries(self, claim: AtomicClaim) -> List[str]:
+        """Generate focused, targeted search queries for each proposition in a claim."""
+        if claim.temporal_sensitivity == TemporalSensitivity.TIME_INVARIANT:
+            return []
+
+        queries: List[str] = []
+        if claim.propositions and len(claim.propositions) > 1:
+            for prop in claim.propositions:
+                subj = prop.subject.strip()
+                pred = prop.predicate.strip()
+                obj = prop.object.strip()
+                q = f"{subj} {pred} {obj}".strip()
+                clean_q = re.sub(r"[\'\"\(\)\[\]\{\}\;\:\?]", " ", q)
+                compact = " ".join(clean_q.split())[:350]
+                if compact and compact not in queries:
+                    queries.append(compact)
+            if queries:
+                return queries
+
+        # Fallback to claim level
         entity = claim.entity.strip() if claim.entity else ""
         attribute = claim.attribute.strip() if claim.attribute else ""
         val = claim.claimed_value.strip() if claim.claimed_value else ""
 
-        # Clean filler words
         clean_norm = re.sub(r"^(however|furthermore|meanwhile|in addition|additionally|also|therefore),\s*", "", claim.normalized_text, flags=re.IGNORECASE).strip()
 
-        # Build concise targeted query
         if entity and attribute:
-            # Check if attribute or entity already contains status
             query = f"{entity} {attribute}"
             if val and len(val.split()) <= 4:
                 query = f"{query} {val}"
-            # Add recency marker if not present
             if not any(w in query.lower() for w in ["latest", "current", "update", "now", "recent"]):
                 query = f"{query} latest update"
         else:
             query = clean_norm
 
-        # Clean excessive punctuation and clamp to 350 chars
         clean_q = re.sub(r"[\'\"\(\)\[\]\{\}\;\:\?]", " ", query)
         compact_q = " ".join(clean_q.split())
-        return compact_q[:350] if compact_q else None
+        return [compact_q[:350]] if compact_q else []
 
     async def research_claims(
         self,
@@ -137,28 +156,31 @@ class EvidenceResearchService:
             if searches_executed >= max_limit:
                 break
 
-            query = self.generate_search_query(claim)
-            if not query or query in seen_queries:
-                continue
-            seen_queries.add(query)
-
-            res = await self.tavily.search(query)
-            if res.get("source") == "cache":
-                cache_hits += 1
-            elif res.get("source") == "live":
-                searches_executed += 1
-
-            if res.get("error"):
-                errors.append(res["error"])
-
-            for item in res.get("results", []):
-                url = item.get("url", "")
-                content = item.get("content", "").strip()
-                if not content:
+            queries = self.generate_proposition_queries(claim)
+            for query in queries:
+                if searches_executed >= max_limit:
+                    break
+                if not query or query in seen_queries:
                     continue
+                seen_queries.add(query)
 
-                domain = urlparse(url).netloc.replace("www.", "") if url else "web"
-                pub_date = parse_datetime(item.get("published_date"))
+                res = await self.tavily.search(query)
+                if res.get("source") == "cache":
+                    cache_hits += 1
+                elif res.get("source") == "live":
+                    searches_executed += 1
+
+                if res.get("error"):
+                    errors.append(res["error"])
+
+                for item in res.get("results", []):
+                    url = item.get("url", "")
+                    content = item.get("content", "").strip()
+                    if not content:
+                        continue
+
+                    domain = urlparse(url).netloc.replace("www.", "") if url else "web"
+                    pub_date = parse_datetime(item.get("published_date"))
                 score = float(item.get("score", 0.7))
 
                 quality, factors = estimate_source_quality(url, item.get("title", ""), content, pub_date, score)

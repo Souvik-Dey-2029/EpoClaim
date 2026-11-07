@@ -7,12 +7,29 @@ from pydantic import BaseModel, Field
 
 
 class VerificationVerdict(str, Enum):
-    """Categorical verdict for a factual claim."""
+    """Categorical verdict for a factual claim or proposition."""
     SUPPORTED = "SUPPORTED"
+    PARTIALLY_SUPPORTED = "PARTIALLY_SUPPORTED"
     CONTRADICTED = "CONTRADICTED"
     OUTDATED = "OUTDATED"
     INSUFFICIENT_EVIDENCE = "INSUFFICIENT_EVIDENCE"
+    CONFLICTING = "CONFLICTING"
     UNVERIFIED = "UNVERIFIED"
+
+
+class PropositionVerificationResult(BaseModel):
+    """Factual entailment and stance assessment result for an individual atomic proposition."""
+    proposition_id: str = Field(..., description="ID of the verified proposition")
+    parent_claim_id: str = Field(..., description="ID of parent claim")
+    verdict: VerificationVerdict = Field(..., description="Proposition-level categorical outcome")
+    entailment_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    contradiction_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    neutral_score: float = Field(default=0.0, ge=0.0, le=1.0)
+    verification_confidence: float = Field(default=0.0, ge=0.0, le=1.0)
+    supporting_evidence_ids: List[str] = Field(default_factory=list)
+    contradicting_evidence_ids: List[str] = Field(default_factory=list)
+    neutral_evidence_ids: List[str] = Field(default_factory=list)
+    explanation: str = Field(default="")
 
 
 class VerificationResult(BaseModel):
@@ -42,5 +59,9 @@ class VerificationResult(BaseModel):
     explanation: str = Field(
         default="",
         description="Human-readable explanation of why this verdict was reached"
+    )
+    proposition_results: List[PropositionVerificationResult] = Field(
+        default_factory=list,
+        description="Individual verification outcomes for decomposed propositions"
     )
 

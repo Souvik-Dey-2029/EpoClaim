@@ -8,6 +8,7 @@ from app.schemas.claims import AtomicClaim
 from app.schemas.evidence import EvidenceRecord
 from app.schemas.verification import VerificationResult
 from app.schemas.freshness import FreshnessResult
+from app.schemas.correction import GroundedCorrection
 
 
 class ClaimAnalysisDetail(BaseModel):
@@ -25,6 +26,7 @@ class FinalReport(BaseModel):
     original_input: str = Field(..., description="AI-generated text or collection of statements evaluated")
     total_claims: int = Field(default=0, ge=0)
     supported_claims: int = Field(default=0, ge=0)
+    partially_supported_claims: int = Field(default=0, ge=0, description="Claims with mixed proposition outcomes")
     contradicted_claims: int = Field(default=0, ge=0)
     outdated_claims: int = Field(default=0, ge=0)
     insufficient_evidence_claims: int = Field(default=0, ge=0)
@@ -40,6 +42,10 @@ class FinalReport(BaseModel):
     evidence_sources: List[EvidenceRecord] = Field(
         default_factory=list,
         description="Deduplicated list of all external sources and evidence records cited"
+    )
+    grounded_correction: Optional[GroundedCorrection] = Field(
+        default=None,
+        description="Evidence-grounded corrected answer synthesized from verified propositions"
     )
     execution_metadata: Dict[str, Any] = Field(
         default_factory=dict,

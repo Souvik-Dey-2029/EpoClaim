@@ -48,6 +48,15 @@ class ReportRepository:
                 )
                 """
             )
+            # Add partially_supported_claims column if missing
+            cur = conn.cursor()
+            cur.execute("PRAGMA table_info(reports)")
+            cols = [r["name"] for r in cur.fetchall()]
+            if "partially_supported_claims" not in cols:
+                try:
+                    conn.execute("ALTER TABLE reports ADD COLUMN partially_supported_claims INTEGER DEFAULT 0")
+                except Exception:
+                    pass
             conn.commit()
 
     def save_report(self, report: FinalReport) -> None:
@@ -57,15 +66,16 @@ class ReportRepository:
                 """
                 INSERT OR REPLACE INTO reports (
                     report_id, original_input, total_claims, supported_claims,
-                    contradicted_claims, outdated_claims, insufficient_evidence_claims,
-                    unverified_claims, overall_assessment, payload
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                    partially_supported_claims, contradicted_claims, outdated_claims,
+                    insufficient_evidence_claims, unverified_claims, overall_assessment, payload
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 """,
                 (
                     report.report_id,
                     report.original_input,
                     report.total_claims,
                     report.supported_claims,
+                    getattr(report, "partially_supported_claims", 0),
                     report.contradicted_claims,
                     report.outdated_claims,
                     report.insufficient_evidence_claims,

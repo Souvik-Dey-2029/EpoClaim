@@ -38,6 +38,10 @@ class BenchmarkReport(BaseModel):
     stale_detection_rate: float
     fresh_acceptance_rate: float
     false_stale_detection_rate: float
+    parent_verdict_accuracy: float = 1.0
+    parent_verdict_accuracy_ci_95: tuple[float, float] = (1.0, 1.0)
+    abstention_rate: float = 1.0
+    category_metrics: Dict[str, Any] = Field(default_factory=dict)
     scenario_results: List[Dict[str, Any]] = Field(default_factory=list)
     summary: str = ""
 

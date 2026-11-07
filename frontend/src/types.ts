@@ -2,9 +2,11 @@ export type TemporalSensitivity = "TIME_INVARIANT" | "SLOW_MOVING" | "FAST_MOVIN
 
 export type VerificationVerdict =
   | "SUPPORTED"
+  | "PARTIALLY_SUPPORTED"
   | "CONTRADICTED"
   | "OUTDATED"
   | "INSUFFICIENT_EVIDENCE"
+  | "CONFLICTING"
   | "UNVERIFIED";
 
 export type FreshnessStatus =
@@ -13,6 +15,61 @@ export type FreshnessStatus =
   | "DRIFTING"
   | "STATIC_VALID"
   | "UNKNOWN";
+
+export interface StructuredProposition {
+  proposition_id: string;
+  parent_claim_id: string;
+  source_claim_id: string;
+  subject: string;
+  predicate: string;
+  object: string;
+  qualifiers: Record<string, any>;
+  polarity: "POSITIVE" | "NEGATIVE";
+  temporal_scope?: string | null;
+  related_entities: string[];
+  original_text_span: string;
+  extraction_confidence: number;
+}
+
+export interface PropositionVerificationResult {
+  proposition_id: string;
+  parent_claim_id: string;
+  verdict: VerificationVerdict;
+  entailment_score: number;
+  contradiction_score: number;
+  neutral_score: number;
+  verification_confidence: number;
+  supporting_evidence_ids: string[];
+  contradicting_evidence_ids: string[];
+  neutral_evidence_ids: string[];
+  explanation: string;
+}
+
+export interface CitationReference {
+  citation_number: number;
+  evidence_id: string;
+  source_title: string;
+  source_url?: string | null;
+  published_date?: string | null;
+  snippet: string;
+}
+
+export interface CorrectionDelta {
+  claim_id: string;
+  proposition_id?: string | null;
+  change_type: string;
+  original_text: string;
+  explanation: string;
+}
+
+export interface GroundedCorrection {
+  original_text: string;
+  corrected_text: string;
+  as_of_timestamp: string;
+  citations: CitationReference[];
+  deltas: CorrectionDelta[];
+  unresolved_uncertainties: string[];
+}
 
 export interface AtomicClaim {
   claim_id: string;
@@ -26,6 +83,7 @@ export interface AtomicClaim {
   extraction_confidence: number;
   start_char?: number | null;
   end_char?: number | null;
+  propositions?: StructuredProposition[];
 }
 
 export interface EvidenceRecord {
@@ -54,6 +112,7 @@ export interface VerificationResult {
   verification_confidence: number;
   evidence_ids: string[];
   explanation: string;
+  proposition_results?: PropositionVerificationResult[];
 }
 
 export interface FreshnessResult {
@@ -81,6 +140,7 @@ export interface FinalReport {
   original_input: string;
   total_claims: number;
   supported_claims: number;
+  partially_supported_claims?: number;
   contradicted_claims: number;
   outdated_claims: number;
   insufficient_evidence_claims: number;
@@ -88,6 +148,7 @@ export interface FinalReport {
   overall_assessment: string;
   claim_results: ClaimAnalysisDetail[];
   evidence_sources: EvidenceRecord[];
+  grounded_correction?: GroundedCorrection | null;
   execution_metadata: Record<string, any>;
 }
 
@@ -123,6 +184,10 @@ export interface BenchmarkReport {
   stale_detection_rate: number;
   fresh_acceptance_rate: number;
   false_stale_detection_rate: number;
+  parent_verdict_accuracy?: number;
+  parent_verdict_accuracy_ci_95?: [number, number];
+  abstention_rate?: number;
+  category_metrics?: Record<string, any>;
   scenario_results: Array<{
     scenario_id: string;
     test_type: string;

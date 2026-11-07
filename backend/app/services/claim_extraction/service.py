@@ -8,8 +8,9 @@ from __future__ import annotations
 import re
 import uuid
 from typing import List, Tuple
-from app.schemas.claims import AtomicClaim, TemporalSensitivity
+from app.schemas.claims import AtomicClaim, TemporalSensitivity, StructuredProposition
 from app.core.security import sanitize_untrusted_text
+from app.services.claim_extraction.proposition_decomposer import PropositionDecompositionService
 
 # Patterns identifying non-factual conversational or meta sentences
 _DISCOURSE_PATTERNS = [
@@ -24,7 +25,10 @@ _SPLIT_REGEX = re.compile(r"(?<=[.!?])\s+|\n+")
 
 
 class ClaimExtractionService:
-    """Extracts atomic factual claims with exact text span mappings."""
+    """Extracts atomic factual claims with exact text span mappings and structured propositions."""
+
+    def __init__(self):
+        self.decomposer = PropositionDecompositionService()
 
     def extract_claims(self, text: str) -> List[AtomicClaim]:
         """Extract atomic claims from the given text."""
@@ -44,26 +48,31 @@ class ClaimExtractionService:
             if self._is_non_factual_filler(cleaned_s):
                 continue
 
-            # Check if sentence contains multiple coordinate factual clauses
-            sub_clauses = self._decompose_compound_sentence(cleaned_s, start)
-            for sub_text, sub_start, sub_end in sub_clauses:
-                claim_id = f"clm_{uuid.uuid4().hex[:8]}"
-                entity, attribute, value = self._heuristic_parse_triple(sub_text)
-                
-                claims.append(
-                    AtomicClaim(
-                        claim_id=claim_id,
-                        original_text=sub_text,
-                        normalized_text=self._normalize_clause(sub_text),
-                        entity=entity,
-                        attribute=attribute,
-                        claimed_value=value,
-                        temporal_sensitivity=TemporalSensitivity.SLOW_MOVING,
-                        extraction_confidence=0.92,
-                        start_char=sub_start,
-                        end_char=sub_end,
-                    )
+            claim_id = f"clm_{uuid.uuid4().hex[:8]}"
+            entity, attribute, value = self._heuristic_parse_triple(cleaned_s)
+            
+            # Decompose into structured atomic propositions
+            props = self.decomposer.decompose_claim(
+                parent_claim_id=claim_id,
+                text=cleaned_s,
+                inherited_entity=entity,
+            )
+
+            claims.append(
+                AtomicClaim(
+                    claim_id=claim_id,
+                    original_text=cleaned_s,
+                    normalized_text=self._normalize_clause(cleaned_s),
+                    entity=entity,
+                    attribute=attribute,
+                    claimed_value=value,
+                    temporal_sensitivity=TemporalSensitivity.SLOW_MOVING,
+                    extraction_confidence=0.92,
+                    start_char=start,
+                    end_char=end,
+                    propositions=props,
                 )
+            )
 
         return claims
 

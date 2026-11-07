@@ -251,6 +251,12 @@ export function App() {
                       <div className="metric-num">{report.supported_claims}</div>
                       <div className="metric-lbl">Supported</div>
                     </div>
+                    {report.partially_supported_claims !== undefined && report.partially_supported_claims > 0 && (
+                      <div className="metric-box partial" style={{ borderColor: "#f59e0b" }}>
+                        <div className="metric-num" style={{ color: "#f59e0b" }}>{report.partially_supported_claims}</div>
+                        <div className="metric-lbl">Partial</div>
+                      </div>
+                    )}
                     <div className="metric-box outdated">
                       <div className="metric-num">{report.outdated_claims}</div>
                       <div className="metric-lbl">Outdated</div>
@@ -265,6 +271,66 @@ export function App() {
                     </div>
                   </div>
                 </div>
+
+                {/* Grounded Answer Correction Panel */}
+                {report.grounded_correction && (
+                  <div className="panel correction-panel" style={{ marginBottom: "20px", borderLeft: "4px solid #10b981", background: "#0d1b18" }}>
+                    <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "12px" }}>
+                      <h3 style={{ margin: 0, color: "#10b981", display: "flex", alignItems: "center", gap: "8px" }}>
+                        <span>✦</span> Evidence-Grounded Corrected Answer
+                      </h3>
+                      <span style={{ fontSize: "12px", opacity: 0.7 }}>
+                        As of: {new Date(report.grounded_correction.as_of_timestamp).toLocaleDateString()}
+                      </span>
+                    </div>
+                    
+                    <p style={{ fontSize: "15px", lineHeight: "1.6", color: "#f3f4f6", margin: "0 0 16px 0", padding: "12px", background: "rgba(16, 185, 129, 0.08)", borderRadius: "6px" }}>
+                      {report.grounded_correction.corrected_text}
+                    </p>
+
+                    {/* Itemized Changes */}
+                    {report.grounded_correction.deltas && report.grounded_correction.deltas.length > 0 && (
+                      <div style={{ marginTop: "12px" }}>
+                        <h4 style={{ fontSize: "13px", textTransform: "uppercase", letterSpacing: "0.5px", color: "#9ca3af", marginBottom: "8px" }}>
+                          What Changed & Why
+                        </h4>
+                        <div style={{ display: "flex", flexDirection: "column", gap: "6px" }}>
+                          {report.grounded_correction.deltas.map((d, i) => (
+                            <div key={i} style={{ fontSize: "13px", padding: "6px 10px", background: "rgba(255, 255, 255, 0.03)", borderRadius: "4px", display: "flex", gap: "8px", alignItems: "flex-start" }}>
+                              <span style={{ fontWeight: 600, color: d.change_type === "RETAINED_SUPPORTED" ? "#10b981" : d.change_type === "QUALIFIED_UNVERIFIED" ? "#f59e0b" : "#ef4444" }}>
+                                {d.change_type === "RETAINED_SUPPORTED" ? "✓" : d.change_type === "QUALIFIED_UNVERIFIED" ? "⚠" : "✗"}
+                              </span>
+                              <div>
+                                <span style={{ color: "#d1d5db" }}>"{d.original_text}"</span>:{" "}
+                                <span style={{ color: "#9ca3af" }}>{d.explanation}</span>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Citations list */}
+                    {report.grounded_correction.citations && report.grounded_correction.citations.length > 0 && (
+                      <div style={{ marginTop: "14px", borderTop: "1px solid rgba(255, 255, 255, 0.08)", paddingTop: "10px" }}>
+                        <div style={{ fontSize: "12px", color: "#9ca3af", marginBottom: "4px" }}>Sources Cited:</div>
+                        <div style={{ display: "flex", flexWrap: "wrap", gap: "10px" }}>
+                          {report.grounded_correction.citations.map((c) => (
+                            <a
+                              key={c.citation_number}
+                              href={c.source_url || "#"}
+                              target="_blank"
+                              rel="noreferrer"
+                              style={{ fontSize: "12px", color: "#60a5fa", textDecoration: "none" }}
+                            >
+                              [{c.citation_number}] {c.source_title}
+                            </a>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
 
                 {/* Claims & Detailed Evidence split */}
                 <div className="claims-split-view">

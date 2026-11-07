@@ -128,5 +128,110 @@ def get_default_benchmark_scenarios() -> List[EvaluationScenario]:
                 }
             ],
         ),
+        EvaluationScenario(
+            scenario_id="scen_06_gpt41_compound_failure",
+            entity="OpenAI GPT-4.1",
+            attribute="model status and API availability",
+            old_value="latest model and available via API",
+            new_value="available via API but not confirmed as latest",
+            change_date="2026-02-13T00:00:00Z",
+            query="Is GPT-4.1 the latest model in the GPT-4 series and available via API?",
+            original_claim="OpenAI's GPT-4.1 remains the latest model in the GPT-4 series and is available through the API.",
+            updated_claim="OpenAI's GPT-4.1 is available through the API.",
+            expected_stale_verdict="PARTIALLY_SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "OpenAI Help Center Release Notes",
+                    "content": "GPT-4.1 is available in the API. In the API, there are no changes at this time.",
+                    "published_date": "2026-01-29T00:00:00Z",
+                },
+                {
+                    "title": "Introducing GPT-4.1 in the API",
+                    "content": "Note that GPT-4.1 will only be available via the API.",
+                    "published_date": "2025-04-14T00:00:00Z",
+                },
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_07_compound_both_supported",
+            entity="Neil Armstrong",
+            attribute="astronaut status and moon landing",
+            old_value="American astronaut and walked on the moon",
+            new_value="American astronaut and walked on the moon",
+            change_date="1969-07-20T20:17:00Z",
+            query="Who was Neil Armstrong?",
+            original_claim="Neil Armstrong was an American astronaut and is the first person to walk on the Moon.",
+            updated_claim="Neil Armstrong was an American astronaut and walked on the Moon.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "NASA Apollo History",
+                    "content": "Neil Armstrong was an American astronaut and is the first person to walk on the Moon.",
+                    "published_date": "2021-01-01T00:00:00Z",
+                }
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_08_contrastive_deprecation",
+            entity="Legacy API vs Modern API",
+            attribute="lifecycle state",
+            old_value="previous deprecated but replacement supported",
+            new_value="previous deprecated but replacement supported",
+            change_date="2024-01-01T00:00:00Z",
+            query="What is the status of the API versions?",
+            original_claim="The legacy v1 API was deprecated, but the replacement v2 API is supported.",
+            updated_claim="The legacy v1 API was deprecated, but the replacement v2 API is supported.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "API Lifecycle Announcement",
+                    "content": "The legacy v1 API was officially deprecated. Meanwhile, the replacement v2 API is fully supported.",
+                    "published_date": "2024-02-01T00:00:00Z",
+                }
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_09_negation_availability",
+            entity="GPT-4.1",
+            attribute="platform availability",
+            old_value="not available in ChatGPT but remains available in API",
+            new_value="not available in ChatGPT but remains available in API",
+            change_date="2026-02-13T00:00:00Z",
+            query="Where can I use GPT-4.1?",
+            original_claim="The model is not available in ChatGPT but remains available through the API.",
+            updated_claim="The model is not available in ChatGPT but remains available through the API.",
+            expected_stale_verdict="SUPPORTED",
+            expected_fresh_verdict="SUPPORTED",
+            context_docs=[
+                {
+                    "title": "Model Availability Update",
+                    "content": "The model is not available in ChatGPT but remains available through the API.",
+                    "published_date": "2026-01-29T00:00:00Z",
+                }
+            ],
+        ),
+        EvaluationScenario(
+            scenario_id="scen_10_missing_dates_uncertainty",
+            entity="Quantum Corp",
+            attribute="valuation",
+            old_value="50 billion dollars",
+            new_value="uncertain",
+            change_date="2025-06-01T00:00:00Z",
+            query="What is Quantum Corp valued at?",
+            original_claim="Quantum Corp is valued at 50 billion dollars.",
+            updated_claim="Quantum Corp is valued at 50 billion dollars.",
+            expected_stale_verdict="INSUFFICIENT_EVIDENCE",
+            expected_fresh_verdict="INSUFFICIENT_EVIDENCE",
+            context_docs=[
+                {
+                    "title": "Blog Speculation",
+                    "content": "Some analysts discuss whether Quantum Corp could reach higher valuations.",
+                    "published_date": None,
+                }
+            ],
+        ),
     ]
 

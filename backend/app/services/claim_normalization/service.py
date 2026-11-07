@@ -32,6 +32,14 @@ class ClaimNormalizationService:
 
         # Clean trailing commas/periods
         claim.normalized_text = claim.normalized_text.strip().rstrip(".,;")
+
+        # Also propagate context entity and normalization to sub-propositions if needed
+        if claim.propositions:
+            for prop in claim.propositions:
+                if prop.subject.lower() in {"it", "the model", "he", "she", "they"} and context_entity:
+                    prop.subject = context_entity
+                    prop.related_entities = [context_entity]
+
         return claim
 
     def _extract_temporal_reference(self, text: str) -> Optional[str]:

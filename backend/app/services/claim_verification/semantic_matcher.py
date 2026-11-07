@@ -175,8 +175,17 @@ class GeneralSemanticVerifier:
                         return 0.05, 0.90, 0.05
 
         # 5. Negation polarity collision
+        # Check if predicate and object are directly asserted in evidence without negation attached
+        pred_obj_norm = f"{claim_attribute} {claim_value}".lower().strip().rstrip(".,;")
+        pred_obj_in_evidence = len(pred_obj_norm) > 10 and pred_obj_norm in e_norm
+        is_substring = (
+            c_norm in e_norm
+            or (len(c_norm) > 15 and c_norm.rstrip(".,;") in e_norm)
+            or pred_obj_in_evidence
+        )
         if e_has_negation != c_has_negation and overlap_ratio >= 0.55:
-            return 0.05, 0.85, 0.10
+            if not is_substring:
+                return 0.05, 0.85, 0.10
 
         # 6. Check for distinct grammatical subject head mismatch (e.g. Alice vs Bob)
         # If the asserted subject entity does not appear anywhere in evidence, high overlap
@@ -184,17 +193,20 @@ class GeneralSemanticVerifier:
         m_c = re.match(r"^([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b", claim_text.strip())
         if m_c:
             c_head = m_c.group(1).lower()
-            if c_head not in e_norm:
+            if c_head not in e_norm and not is_substring:
                 # Evidence is discussing a different subject entity! Return Neutral
                 return 0.15, 0.15, 0.70
 
         # 7. Direct entailment / semantic support
-        # High token overlap with matching polarity and no version/subject conflict
-        if overlap_ratio >= 0.60 and not e_has_negation:
+        # High token overlap with matching polarity and no version/subject conflict, OR exact substring
+        if is_substring:
+            return 0.95, 0.02, 0.03
+
+        if overlap_ratio >= 0.60 and not (e_has_negation != c_has_negation):
             if not (c_versions and e_versions and c_versions != e_versions):
                 return 0.90, 0.05, 0.05
 
-        if overlap_ratio >= 0.40 and not e_has_negation:
+        if overlap_ratio >= 0.40 and not (e_has_negation != c_has_negation):
             if not (c_versions and e_versions and c_versions != e_versions):
                 return 0.70, 0.10, 0.20
 

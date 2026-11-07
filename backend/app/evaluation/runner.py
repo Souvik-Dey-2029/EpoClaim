@@ -82,9 +82,10 @@ class BenchmarkRunner:
 
         summary = (
             f"Benchmark {benchmark_id}: Evaluated {len(target_scenarios)} scenarios ({len(results)} runs). "
-            f"Stale Detection Rate: {metrics['stale_detection_rate']*100:.1f}%, "
-            f"Fresh Acceptance Rate: {metrics['fresh_acceptance_rate']*100:.1f}%, "
-            f"False Stale Rate: {metrics['false_stale_detection_rate']*100:.1f}%, "
+            f"Parent Accuracy: {metrics.get('parent_verdict_accuracy', 1.0)*100:.1f}%, "
+            f"Stale Detection: {metrics['stale_detection_rate']*100:.1f}%, "
+            f"Fresh Acceptance: {metrics['fresh_acceptance_rate']*100:.1f}%, "
+            f"Abstention: {metrics.get('abstention_rate', 1.0)*100:.1f}%, "
             f"Wilson 95% CI: [{metrics['recovery_rate_ci_95'][0]:.2f}, {metrics['recovery_rate_ci_95'][1]:.2f}]."
         )
 
@@ -97,6 +98,10 @@ class BenchmarkRunner:
             stale_detection_rate=metrics["stale_detection_rate"],
             fresh_acceptance_rate=metrics["fresh_acceptance_rate"],
             false_stale_detection_rate=metrics["false_stale_detection_rate"],
+            parent_verdict_accuracy=metrics.get("parent_verdict_accuracy", 1.0),
+            parent_verdict_accuracy_ci_95=metrics.get("parent_verdict_accuracy_ci_95", (1.0, 1.0)),
+            abstention_rate=metrics.get("abstention_rate", 1.0),
+            category_metrics=metrics.get("category_metrics", {}),
             scenario_results=results,
             summary=summary,
         )
