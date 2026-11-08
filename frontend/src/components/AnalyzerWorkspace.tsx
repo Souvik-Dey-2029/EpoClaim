@@ -1,8 +1,6 @@
 import { useState } from "react";
 import type { FinalReport, ClaimAnalysisDetail, TavilyStatus } from "../types";
-import { ParentVerdictHero } from "./ParentVerdictHero";
-import { GroundedCorrectionCard } from "./GroundedCorrectionCard";
-import { PropositionInspector } from "./PropositionInspector";
+import { ScalableForensicReportView } from "./ScalableForensicReportView";
 
 interface PresetScenario {
   label: string;
@@ -300,27 +298,13 @@ export function AnalyzerWorkspace({
         )}
       </section>
 
-      {/* Verification Results Deck */}
+      {/* Scalable Forensic Verification Report Workspace */}
       {report && (
-        <section className="workspace-results-deck">
-          {/* 1. Parent Synthesis Banner */}
-          <ParentVerdictHero report={report} />
-
-          {/* 2. Grounded Correction Presentation */}
-          {report.grounded_correction && (
-            <GroundedCorrectionCard
-              correction={report.grounded_correction}
-              originalInput={report.original_input}
-            />
-          )}
-
-          {/* 3. Deep Claim & Evidence Inspector */}
-          <PropositionInspector
-            claims={report.claim_results}
-            selectedClaim={selectedClaim}
-            onSelectClaim={(claim) => setSelectedClaim(claim)}
-          />
-        </section>
+        <ScalableForensicReportView
+          report={report}
+          selectedClaim={selectedClaim}
+          onSelectClaim={(claim) => setSelectedClaim(claim)}
+        />
       )}
     </div>
   );

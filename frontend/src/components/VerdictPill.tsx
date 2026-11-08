@@ -15,57 +15,57 @@ export function VerdictPill({
         return {
           label: "Supported",
           symbol: "✓",
-          bg: "#174A35",
-          text: "#E8F5E9",
+          bg: "#174A35", // Deep emerald
+          text: "#FFFFFF",
           border: "#2E7D32",
         };
       case "PARTIALLY_SUPPORTED":
         return {
           label: "Partially Supported",
           symbol: "◐",
-          bg: "#7C5205",
-          text: "#FEF3C7",
+          bg: "#C07A18", // Amber
+          text: "#FFFFFF",
           border: "#D97706",
         };
       case "OUTDATED":
         return {
           label: "Outdated / Stale",
           symbol: "⏳",
-          bg: "#7F1D1D",
-          text: "#FEE2E2",
+          bg: "#A74735", // Rust red
+          text: "#FFFFFF",
           border: "#DC2626",
         };
       case "CONTRADICTED":
         return {
           label: "Contradicted",
           symbol: "✗",
-          bg: "#450A0A",
-          text: "#FCA5A5",
+          bg: "#8C2D25", // Dark rust red
+          text: "#FFFFFF",
           border: "#991B1B",
         };
       case "INSUFFICIENT_EVIDENCE":
         return {
-          label: "Insufficient Evidence",
+          label: "Unconfirmed",
           symbol: "⊘",
-          bg: "#2A2D34",
-          text: "#E2E8F0",
-          border: "#64748B",
+          bg: "#5D5443", // Muted ochre
+          text: "#FFFFFF",
+          border: "#8C7B5D",
         };
       case "CONFLICTING":
         return {
           label: "Conflicting Evidence",
           symbol: "⇄",
           bg: "#4A1D96",
-          text: "#F3E8FF",
+          text: "#FFFFFF",
           border: "#9333EA",
         };
       default:
         return {
           label: "Unverified",
           symbol: "—",
-          bg: "#3F3F46",
-          text: "#F4F4F5",
-          border: "#71717A",
+          bg: "#5D5443", // Muted ochre
+          text: "#FFFFFF",
+          border: "#8C7B5D",
         };
     }
   };
