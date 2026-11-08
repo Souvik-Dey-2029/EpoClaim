@@ -10,6 +10,7 @@ from __future__ import annotations
 import json
 import logging
 import time
+import asyncio
 from typing import Any, Dict, List, Optional, Set
 import httpx
 
@@ -84,7 +85,12 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
         max_retries: Optional[int] = None,
         http_client: Optional[httpx.AsyncClient] = None,
     ):
-        self._base_url = (base_url or settings.bifrost_base_url or settings.bifrost_endpoint).rstrip("/")
+        raw_base = (base_url or settings.bifrost_base_url or settings.bifrost_endpoint).rstrip("/")
+        if raw_base and not raw_base.endswith("/v1"):
+            # Ensure base_url has /v1 prefix for OpenAI-compatible completions
+            self._base_url = f"{raw_base}/v1"
+        else:
+            self._base_url = raw_base
         self._model = model or settings.bifrost_model
         self._api_key = api_key or settings.bifrost_api_key
         self._timeout = timeout_seconds if timeout_seconds is not None else settings.bifrost_timeout_seconds
@@ -225,6 +231,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                             f"Bifrost decomposition HTTP {resp.status_code} error on attempt {attempts}/{self._max_retries + 1}"
                         )
                         last_error = RuntimeError(f"Bifrost HTTP {resp.status_code}: {resp.text[:200]}")
+                        if attempts <= self._max_retries:
+                            await asyncio.sleep(1.0 * attempts)
                         continue
 
                     data = resp.json()
@@ -355,6 +363,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                             f"Bifrost correction HTTP {resp.status_code} error on attempt {attempts}/{self._max_retries + 1}"
                         )
                         last_error = RuntimeError(f"Bifrost HTTP {resp.status_code}: {resp.text[:200]}")
+                        if attempts <= self._max_retries:
+                            await asyncio.sleep(1.0 * attempts)
                         continue
 
                     data = resp.json()
@@ -461,6 +471,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                             f"Bifrost HTTP {resp.status_code} error on attempt {attempts}/{self._max_retries + 1}"
                         )
                         last_error = RuntimeError(f"Bifrost HTTP {resp.status_code}: {resp.text[:200]}")
+                        if attempts <= self._max_retries:
+                            await asyncio.sleep(1.0 * attempts)
                         continue
 
                     data = resp.json()

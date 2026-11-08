@@ -244,52 +244,65 @@ class PropositionDecompositionService:
 
         # Case 2: Independent subjects coordinate: "S1 P1 O1 and S2 P2 O2"
         # Example: "OpenAI developed GPT-4 and Anthropic released Claude."
-        coord_clause_match = re.search(r"^(.*?)\s+and\s+([A-Z][a-zA-Z0-9_\'\-\.]*)\s+(is|was|are|were|released|launched|announced|acquired|founded|developed)\s+(.*)$", text)
+        # Also handles possessive specifiers: "OpenAI is based in San Francisco, and its interim CEO is Mira Murati."
+        coord_clause_pattern = re.compile(
+            r"^(?P<left>.+?)(?:,\s*and\s+|\s+and\s+)(?P<subj>(?:(?:its|their|his|her|our|the|this|that)\s+[a-zA-Z0-9_\'\-]+(?:\s+[a-zA-Z0-9_\'\-]+)?|[A-Z][a-zA-Z0-9_\'\-\.]*|\bit\b|\bthey\b|\bhe\b|\bshe\b))\s+(?P<verb>is\s+not|was\s+not|are\s+not|were\s+not|is|was|are|were|remains|continues\s+to\s+be|became|has\s+been|released|launched|announced|acquired|founded|developed|created|built|attended|defeated|won|changed|operates|maintains|leads|manages|directs|serves\s+as)\s+(?P<rest>.+)$",
+            re.IGNORECASE,
+        )
+        verb_check = re.compile(
+            r"\b(is|was|are|were|remains|continues|became|has|released|launched|announced|acquired|founded|developed|created|built|attended|defeated|won|changed|operates|maintains|leads|manages|directs|serves)\b",
+            re.IGNORECASE,
+        )
+
+        coord_clause_match = coord_clause_pattern.search(text)
         if coord_clause_match:
-            left_clause = coord_clause_match.group(1).strip()
-            subj2 = coord_clause_match.group(2).strip()
-            verb2 = coord_clause_match.group(3).strip()
-            rest2 = coord_clause_match.group(4).strip()
+            left_clause = coord_clause_match.group("left").strip()
+            subj2 = coord_clause_match.group("subj").strip()
+            verb2 = coord_clause_match.group("verb").strip()
+            rest2 = coord_clause_match.group("rest").strip().rstrip(".,;")
 
-            right_clause = f"{subj2} {verb2} {rest2}"
+            # Safety check: Ensure left_clause contains its own finite verb and has sufficient length
+            # to prevent false splits on compound subjects like "OpenAI and Microsoft are..."
+            if verb_check.search(left_clause) and len(left_clause.split()) >= 3:
+                right_clause = f"{subj2} {verb2} {rest2}"
 
-            subj1, pred1, obj1, pol1 = self._parse_spo(left_clause, inherited_entity)
-            subj2, pred2, obj2, pol2 = self._parse_spo(right_clause, subj2)
+                subj1, pred1, obj1, pol1 = self._parse_spo(left_clause, inherited_entity)
+                subj2, pred2, obj2, pol2 = self._parse_spo(right_clause, subj2)
 
-            p1_id = f"prop_{uuid.uuid4().hex[:8]}"
-            p2_id = f"prop_{uuid.uuid4().hex[:8]}"
+                p1_id = f"prop_{uuid.uuid4().hex[:8]}"
+                p2_id = f"prop_{uuid.uuid4().hex[:8]}"
 
-            p1 = StructuredProposition(
-                proposition_id=p1_id,
-                parent_claim_id=parent_claim_id,
-                source_claim_id=parent_claim_id,
-                subject=subj1,
-                predicate=pred1,
-                object=obj1,
-                qualifiers={"coordination": "independent_clause_1"},
-                polarity=pol1,
-                temporal_scope=self._extract_temporal_scope(left_clause),
-                related_entities=[subj1] if subj1 else [],
-                original_text_span=left_clause,
-                extraction_confidence=0.92,
-            )
+                p1 = StructuredProposition(
+                    proposition_id=p1_id,
+                    parent_claim_id=parent_claim_id,
+                    source_claim_id=parent_claim_id,
+                    subject=subj1,
+                    predicate=pred1,
+                    object=obj1,
+                    qualifiers={"coordination": "independent_clause_1"},
+                    polarity=pol1,
+                    temporal_scope=self._extract_temporal_scope(left_clause),
+                    related_entities=[subj1] if subj1 else [],
+                    original_text_span=left_clause,
+                    extraction_confidence=0.92,
+                )
 
-            p2 = StructuredProposition(
-                proposition_id=p2_id,
-                parent_claim_id=parent_claim_id,
-                source_claim_id=parent_claim_id,
-                subject=subj2,
-                predicate=pred2,
-                object=obj2,
-                qualifiers={"coordination": "independent_clause_2"},
-                polarity=pol2,
-                temporal_scope=self._extract_temporal_scope(right_clause),
-                related_entities=[subj2] if subj2 else [],
-                original_text_span=right_clause,
-                extraction_confidence=0.92,
-            )
+                p2 = StructuredProposition(
+                    proposition_id=p2_id,
+                    parent_claim_id=parent_claim_id,
+                    source_claim_id=parent_claim_id,
+                    subject=subj2,
+                    predicate=pred2,
+                    object=obj2,
+                    qualifiers={"coordination": "independent_clause_2"},
+                    polarity=pol2,
+                    temporal_scope=self._extract_temporal_scope(right_clause),
+                    related_entities=[subj2] if subj2 else [],
+                    original_text_span=right_clause,
+                    extraction_confidence=0.92,
+                )
 
-            return [p1, p2]
+                return [p1, p2]
 
         return None
 
@@ -329,8 +342,8 @@ class PropositionDecompositionService:
             o = match.group(3).strip()
             return s or fallback_entity, p, o, polarity
 
-        # Check for transitive verbs: "X released / announced / launched / acquired / developed / attended Y"
-        match2 = re.search(r"^(.*?)\s+(released|launched|announced|acquired|founded|developed|created|built|attended|defeated|won)\s+(.*)$", clean, re.IGNORECASE)
+        # Check for transitive verbs: "X released / announced / launched / acquired / developed / attended / changed / operates Y"
+        match2 = re.search(r"^(.*?)\s+(released|launched|announced|acquired|founded|developed|created|built|attended|defeated|won|changed|operates|maintains|leads|manages|directs|serves\s+as)\s+(.*)$", clean, re.IGNORECASE)
         if match2:
             s = match2.group(1).strip()
             p = match2.group(2).strip()

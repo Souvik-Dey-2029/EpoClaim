@@ -27,6 +27,7 @@ from app.services.claim_verification.scoring import (
     aggregate_evidence_scores,
     aggregate_cluster_evidence_scores,
 )
+from app.core.config import settings
 from app.services.freshness.service import filter_temporally_eligible_evidence
 from app.services.pipeline import EpoClaimPipeline
 from app.evaluation.runner import BenchmarkRunner
@@ -250,8 +251,12 @@ def test_e2e_pipeline_with_phase2b_modes_and_scoring():
     asyncio.run(_run())
 
 
-def test_expanded_18_benchmark_scenarios_deterministic():
+def test_expanded_18_benchmark_scenarios_deterministic(monkeypatch):
     """Verify that all 18 benchmark scenarios are valid and execute cleanly."""
+    monkeypatch.setattr(settings, "enable_llm_semantic_assessment", False)
+    monkeypatch.setattr(settings, "enable_llm_claim_decomposition", False)
+    monkeypatch.setattr(settings, "enable_llm_answer_correction", False)
+
     async def _run():
         scenarios = get_default_benchmark_scenarios()
         assert len(scenarios) == 18

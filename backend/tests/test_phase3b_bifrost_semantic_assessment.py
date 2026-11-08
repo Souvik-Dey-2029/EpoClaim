@@ -449,9 +449,11 @@ def test_deterministic_scoring_conversion_mapping():
     assert n == 1.0 and e == 0.0 and c == 0.0
 
 
-def test_disabled_provider_makes_zero_http_calls():
+def test_disabled_provider_makes_zero_http_calls(monkeypatch):
     """When enable_llm_semantic_assessment is False, provider is unavailable and zero network calls occur."""
-    settings.enable_llm_semantic_assessment = False
+    monkeypatch.setattr(settings, "enable_llm_semantic_assessment", False)
+    monkeypatch.setattr(settings, "enable_llm_claim_decomposition", False)
+    monkeypatch.setattr(settings, "enable_llm_answer_correction", False)
 
     called = False
     def failing_handler(r):
