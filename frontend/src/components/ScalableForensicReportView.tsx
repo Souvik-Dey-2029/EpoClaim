@@ -433,27 +433,26 @@ export function ScalableForensicReportView({
                     <p className="reasoning-body">
                       {currentClaim.verification.explanation}
                     </p>
-                    <div className="selected-scores-line mono-label">
-                      <span>Confidence: {activeConfidence}%</span>
-                      {activeEntail !== null && (
-                        <>
-                          <span className="sep">•</span>
-                          <span>Entailment: {activeEntail}%</span>
-                        </>
-                      )}
-                      {activeContra !== null && (
-                        <>
-                          <span className="sep">•</span>
-                          <span>Contradiction: {activeContra}%</span>
-                        </>
-                      )}
-                      {currentClaim.freshness?.freshness_status && (
-                        <>
-                          <span className="sep">•</span>
-                          <span>Status: {currentClaim.freshness.freshness_status}</span>
-                        </>
-                      )}
+                  </div>
+
+                  {/* Distinct Aligned Technical Metric Panels */}
+                  <div className="technical-metric-panels">
+                    <div className="metric-panel metric-conf">
+                      <span className="metric-panel-label mono-label">CONFIDENCE</span>
+                      <span className="metric-panel-value mono-label">{activeConfidence}%</span>
                     </div>
+                    {activeEntail !== null && (
+                      <div className="metric-panel metric-entail">
+                        <span className="metric-panel-label mono-label">ENTAILMENT</span>
+                        <span className="metric-panel-value mono-label">{activeEntail}%</span>
+                      </div>
+                    )}
+                    {activeContra !== null && (
+                      <div className="metric-panel metric-contra">
+                        <span className="metric-panel-label mono-label">CONTRADICTION</span>
+                        <span className="metric-panel-value mono-label">{activeContra}%</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               ) : (
