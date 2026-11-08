@@ -49,6 +49,7 @@ export function App() {
   );
 
   const [health, setHealth] = useState<{ status: string; integrations: Record<string, boolean> } | null>(null);
+  const [healthChecking, setHealthChecking] = useState<boolean>(true);
   const [tavilyStatus, setTavilyStatus] = useState<TavilyStatus | null>(null);
 
   // Analyzer state
@@ -86,13 +87,38 @@ export function App() {
   };
 
   useEffect(() => {
-    checkHealth()
-      .then(setHealth)
-      .catch(() => setHealth({ status: "offline", integrations: {} }));
+    let isMounted = true;
 
-    getTavilyStatus()
-      .then(setTavilyStatus)
-      .catch(() => setTavilyStatus(null));
+    const performHealthCheck = async () => {
+      try {
+        const res = await checkHealth();
+        if (isMounted) {
+          setHealth(res);
+          setHealthChecking(false);
+        }
+      } catch {
+        if (isMounted) {
+          setHealth({ status: "offline", integrations: {} });
+          setHealthChecking(false);
+        }
+      }
+
+      try {
+        const tavily = await getTavilyStatus();
+        if (isMounted) setTavilyStatus(tavily);
+      } catch {
+        if (isMounted) setTavilyStatus(null);
+      }
+    };
+
+    performHealthCheck();
+
+    // Sensible polling interval (every 30 seconds) to detect engine availability changes
+    const interval = setInterval(performHealthCheck, 30000);
+    return () => {
+      isMounted = false;
+      clearInterval(interval);
+    };
   }, []);
 
   const handleAnalyze = async () => {
@@ -181,15 +207,33 @@ export function App() {
 
           {/* Right Status Cluster */}
           <div className="header-status-cluster">
-            <div className={`status-pill ${health?.status === "healthy" ? "healthy" : "offline"}`}>
-              <span className="status-dot" />
-              <span>{health?.status === "healthy" ? "Engine Live" : "Engine Offline"}</span>
-            </div>
-            {tavilyStatus?.configured && (
-              <span className="tavily-pill">
+            {healthChecking ? (
+              <div className="status-pill checking" title="Querying verification engine health...">
+                <span className="status-dot-pulse" />
+                <span>Checking Engine...</span>
+              </div>
+            ) : (
+              <div
+                className={`status-pill ${health?.status === "healthy" ? "healthy" : "offline"}`}
+                title={
+                  health?.status === "healthy"
+                    ? "Verification engine online — NLI reasoning and decomposition ready"
+                    : "Verification engine offline — backend service unreachable"
+                }
+              >
+                <span className="status-dot" />
+                <span>{health?.status === "healthy" ? "Engine Online" : "Engine Offline"}</span>
+              </div>
+            )}
+            {tavilyStatus?.configured ? (
+              <span className="tavily-pill" title="Live web retrieval configured via Tavily API">
                 Tavily: {tavilyStatus.available_credits} Credits
               </span>
-            )}
+            ) : health?.status === "healthy" ? (
+              <span className="tavily-pill fallback" title="Dense local corpus active (live search unconfigured)">
+                Dense Corpus Active
+              </span>
+            ) : null}
           </div>
         </header>
 
@@ -220,6 +264,8 @@ export function App() {
               tavilyStatus={tavilyStatus}
               presets={PRESET_SCENARIOS}
               onAnalyze={handleAnalyze}
+              engineOnline={health?.status === "healthy"}
+              engineChecking={healthChecking}
             />
           )}
 
