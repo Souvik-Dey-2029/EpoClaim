@@ -34,7 +34,7 @@ EpoClaim solves this through temporal-aware verification:
 1. **Decomposes** complex answers into atomic predicate-argument propositions with exact character spans.
 2. **Retrieves** corroborating and refuting evidence using stance-neutral Reciprocal Rank Fusion (RRF).
 3. **Applies True Half-Life Decay**: Models evidence age using strict exponential decay:
-   $$F(\text{age}) = 2^{-\text{age} / T_{1/2}} = \exp\left(-\frac{\ln(2) \cdot \text{age}}{T_{1/2}}\right)$$
+   $$F(a) = 2^{-a \,/\, T_{1/2}} = \exp\!\left(-\frac{\ln 2 \cdot a}{T_{1/2}}\right)$$
 4. **Distinguishes Temporal Invariance from Decay**: Historical milestones (e.g. Apollo 11) retain full validity, while volatile facts decay unless corroborated by current evidence.
 5. **Issues Auditable Verdicts**: Assigns `SUPPORTED`, `CONTRADICTED`, `OUTDATED`, `PARTIALLY_SUPPORTED`, or `INSUFFICIENT_EVIDENCE` accompanied by evidence citations and grounded corrections.
 
@@ -188,7 +188,7 @@ EpoClaim incorporates architectural patterns and methodologies from open-source 
 
 - **StaleBench** (`KaranSinghDev/StaleBench`, Apache 2.0): Evaluation concepts, Wilson 95% score interval formulations, and whole-token phrase matching adapted under Apache 2.0.
 - **LLM Hallucination Detector** (`SYasJ/llm-hallucination-detector`, MIT): Payload size validation, request sanitation, and error masking patterns adapted under MIT.
-- **RAGEval** (`pandeyvishwas51-oss/rageval`, MIT): Evaluation registry patterns and ISO temporal parser adapted under MIT (with half-life decay math corrected to strict $2^{-\text{age}/T_{1/2}}$).
+- **RAGEval** (`pandeyvishwas51-oss/rageval`, MIT): Evaluation registry patterns and ISO temporal parser adapted under MIT (with half-life decay math corrected to strict $2^{-a/T_{1/2}}$).
 - **Independent Implementations**: All Reciprocal Rank Fusion, BM25 ranking, stance-neutral reranking, decomposition logic, and bitemporal reasoning routines are independently authored clean-room implementations.
 
 For full license texts and copyright statements, please see [`THIRD_PARTY_NOTICES`](THIRD_PARTY_NOTICES) and [`LICENSE`](LICENSE).
