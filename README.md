@@ -28,39 +28,66 @@ EPOCLAIM/
 │   ├── app/
 │   │   ├── api/v1/endpoints.py       # REST API endpoints (/analyze, /health, /analysis/{id}, /evaluate)
 │   │   ├── core/                     # Configuration, security middleware, temporal parsers
-│   │   ├── schemas/                  # Validated Pydantic models (AtomicClaim, EvidenceRecord, etc.)
+│   │   ├── schemas/                  # Validated Pydantic models (AtomicClaim, EvidenceRecord, BenchmarkReport)
 │   │   ├── services/
-│   │   │   ├── claim_extraction/     # Atomic claim extraction with character span tracking
+│   │   │   ├── claim_extraction/     # Proposition decomposition, complexity detection & character span tracking
 │   │   │   ├── claim_normalization/  # Entity-attribute canonicalization & temporal anchor extraction
 │   │   │   ├── temporal_analysis/    # Time sensitivity classification (Invariant vs Slow vs Fast)
 │   │   │   ├── evidence_research/    # Multi-perspective search query formulation
-│   │   │   ├── evidence_retrieval/   # BM25 lexical + dense semantic retrieval
+│   │   │   ├── evidence_retrieval/   # BM25 lexical + dense semantic retrieval & syndicated clustering
 │   │   │   ├── evidence_ranking/     # Reciprocal Rank Fusion (RRF) & stance-neutral reranking
-│   │   │   ├── claim_verification/   # 3-way NLI verification (SUPPORTS, REFUTES, NEUTRAL)
+│   │   │   ├── claim_verification/   # 3-way NLI verification, semantic matcher, Bifrost provider
+│   │   │   ├── correction/           # Grounded correction synthesis with verifiable citations
 │   │   │   ├── freshness/            # True half-life decay & supersedence engine
 │   │   │   ├── reporting/            # Final report compilation & coverage assessment
-│   │   │   └── pipeline.py           # Master end-to-end pipeline orchestrator
-│   │   ├── evaluation/               # StaleBench & RAGEval scenarios, Wilson CI, benchmark runner
-│   │   ├── integrations/             # Tavily live web search client with graceful fallback
+│   │   │   └── pipeline.py           # Master end-to-end pipeline orchestrator (EpoClaimPipeline)
+│   │   ├── evaluation/               # 18 canonical scenarios, 36 dual trials, Wilson CIs, runner
+│   │   ├── integrations/             # Tavily search client with credit ledger, rate limiting & local caching
 │   │   ├── storage/                  # SQLite persistence layer for analysis reports
 │   │   └── main.py                   # FastAPI application entry point
-│   ├── tests/                        # 33 unit and end-to-end automated tests
+│   ├── cli/                          # Administrative CLI tools (budget ledger management)
+│   ├── tests/                        # 201 automated unit, regression, evaluation, and end-to-end tests
 │   ├── requirements.txt
 │   └── .env.example
 ├── frontend/                         # Modern React 19 + TypeScript + Vite UI
-├── evaluation/                       # Evaluation scenarios, datasets, and benchmark reports
+│   ├── src/components/               # Forensic analyzer, 18-scenario benchmark suite, developer hub
+│   └── public/                       # Cached benchmark dataset & brand assets
+├── docs/                             # Architecture documentation, API guides, SDK quickstarts, final audit
+│   ├── BENCHMARK_INTEGRITY_FINAL_AUDIT.md # Verified 5x5 confusion matrix, isolation tests & metrics
+│   ├── artifacts_benchmark_raw_36_trials.json # Canonical 36-trial benchmark artifact
+│   ├── developer_api.md              # REST API reference and authentication guide
+│   └── sdk_quickstart.md             # Python and TypeScript SDK quickstart guides
+├── sdks/                             # Official client SDKs
+│   ├── python/                       # EpoClaim Python SDK
+│   └── typescript/                   # EpoClaim TypeScript SDK
+├── examples/                         # Reference implementations (cURL, TypeScript)
 ├── THIRD_PARTY_NOTICES               # License and copyright notices (Apache 2.0, MIT)
 ├── .gitignore
 └── README.md
-
-EPOCLAIM-LOCAL-RESEARCH/              # Sibling directory for research & reference materials
-├── All_in_One/                       # Original repository ZIP archives
-├── reference_archives/               # Preserved All_in_One.zip archive
-└── research/
-    ├── source_repositories/          # 5 extracted source repositories (read-only reference)
-    ├── extraction_manifest/          # Extraction manifest and audit trail
-    └── implementation_notes/         # Architecture & verification register
 ```
+
+---
+
+## Benchmark Suite & Empirical Grounding
+
+EpoClaim features a rigorous 18-scenario (36 dual-modality trial) Temporal Freshness & Staleness Benchmark suite evaluating complex factual dynamics:
+
+- **Empirical Accuracy & Mathematical Integrity**:
+  - **Exact Verdict Accuracy**: **97.22%** (35 / 36, 95% Wilson CI: $[0.8583, 0.9951]$)
+  - **Normalized Verdict Accuracy**: **100.0%** (36 / 36, 95% Wilson CI: $[0.9036, 1.0]$)
+  - **Stale Detection Rate**: **100.0%** (6 / 6, 95% Wilson CI: $[0.6097, 1.0]$)
+  - **Fresh Acceptance Rate**: **100.0%** (16 / 16, 95% Wilson CI: $[0.8064, 1.0]$)
+  - **False Stale Rate**: **0.0%** (0 / 18, 95% Wilson CI: $[0.0, 0.1759]$)
+  - **Overall Abstention Rate**: **11.11%** (4 / 36)
+  - **Abstention Fidelity**: **100.0%** (4 / 4)
+- **Compound Claim Decomposition & Four-Way Evidence Isolation**:
+  - Validates multi-proposition statements (e.g., Scenario 08: *"The legacy v1 API was deprecated, but the replacement v2 API is supported."*) against isolated independent documents without evidence bleeding.
+- **Explicit Temporal Evaluation Telemetry (`evaluation_as_of`)**:
+  - Grounded to execution timestamps to distinguish contemporary volatile state transitions from historical facts while preserving time-invariance.
+- **Transparent Policy Equivalence**:
+  - Scenario 14 isolates exact mismatches (`OUTDATED` vs `CONTRADICTED` over temporal interval boundaries) from timeless falsehoods, displaying policy normalization badges directly in the UI.
+- **Truthful Provenance**:
+  - All trials execute through the real `EpoClaimPipeline` with bounded offline fixtures consuming 0 Tavily search credits. Detailed results are documented in [`docs/BENCHMARK_INTEGRITY_FINAL_AUDIT.md`](docs/BENCHMARK_INTEGRITY_FINAL_AUDIT.md).
 
 ---
 
@@ -133,7 +160,7 @@ The React UI will be accessible at: `http://localhost:5173`.
 
 ## Running Automated Tests
 
-Run the complete test suite (33 passing unit, mathematical, and end-to-end integration tests):
+Run the complete test suite (201 passing unit, regression, mathematical, and end-to-end integration tests):
 
 ```bash
 python -m pytest backend/tests -v
@@ -141,13 +168,16 @@ python -m pytest backend/tests -v
 
 ### Test Coverage Highlights:
 
+- `test_evaluation.py`: Full 18-scenario (36-trial) dynamic evaluation harness, four-way isolation harness for compound claims, Wilson 95% confidence intervals, `TokenChecker` whole-token phrase matching, temporal `evaluation_as_of` semantics.
+- `test_verification_regression.py`: Generalized regression matrix for person succession, entity distinctions, co-CEO ambiguities, interim appointments, and non-exclusive relationships.
+- `test_mixed_decomposition_regression.py`: Syntactic-semantic claim decomposition, possessive resolution, contrastive clauses, and parent verdict truth tables.
+- `test_phase1_atomic_correction.py` & `test_phase3d_grounded_correction.py`: Grounded correction synthesis, atomic claim extraction, and citation preservation.
 - `test_freshness_math.py`: Strict mathematical validation of half-life decay ($F(0)=1.0$, $F(H)=0.5$, $F(2H)=0.25$, boundary conditions).
-- `test_claim_extraction.py`: Atomic proposition segmentation, non-factual conversational filler removal, exact character span mapping.
 - `test_retrieval_and_rrf.py`: BM25Okapi scoring, vector space dense retrieval, Reciprocal Rank Fusion ($k=60$), stance-neutral NLI reranking.
+- `test_tavily_integration.py`: Tavily search integration, credit ledgering, rate limiting, and in-memory caching.
 - `test_temporal_analysis.py`: Invariant vs slow-moving vs fast-moving classification, date anchor parsing, reference date alignment.
 - `test_verification.py`: Entailment vs contradiction vs neutral stances, temporal supersedence resolution (outdated detection).
-- `test_evaluation.py`: Wilson score 95% confidence intervals, `TokenChecker` whole-token phrase matching (verifying "Park" is not falsely matched in "Parkinson"), scenario generation.
-- `test_api.py`: FastAPI endpoints, payload size limits (2MB), validation error responses.
+- `test_api.py`: FastAPI endpoints, payload size limits (2MB), validation error responses, API key security.
 - `test_pipeline_e2e.py`: Complete async end-to-end analysis lifecycle with SQLite persistence and retrieval.
 
 ---
