@@ -187,10 +187,15 @@ def get_default_benchmark_scenarios() -> List[EvaluationScenario]:
             expected_fresh_verdict="SUPPORTED",
             context_docs=[
                 {
-                    "title": "API Lifecycle Announcement",
-                    "content": "The legacy v1 API was officially deprecated. Meanwhile, the replacement v2 API is fully supported.",
+                    "title": "API v1 Deprecation Policy Notice",
+                    "content": "The legacy v1 API was officially deprecated and will sunset for all external consumers.",
+                    "published_date": "2024-01-15T00:00:00Z",
+                },
+                {
+                    "title": "API v2 Production Support Specification",
+                    "content": "Meanwhile, the replacement v2 API is actively supported and recommended for all production workloads.",
                     "published_date": "2024-02-01T00:00:00Z",
-                }
+                },
             ],
         ),
         EvaluationScenario(

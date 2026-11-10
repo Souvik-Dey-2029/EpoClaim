@@ -175,27 +175,95 @@ export interface TavilyStatus {
   rate_limit_per_minute: number;
 }
 
+export interface BenchmarkMetricDetail {
+  metric_name: string;
+  score: number | null;
+  numerator: number;
+  denominator: number;
+  population: string;
+  ci_95: [number, number] | null;
+  status: "MEASURED" | "NOT_TESTED";
+  explanation: string;
+}
+
+export interface BenchmarkExecutionProvenance {
+  retrieval_mode: string;
+  semantic_mode: string;
+  bifrost_configured: boolean;
+  bifrost_active: boolean;
+  bifrost_model?: string | null;
+  fallback_used: boolean;
+  fallback_reason?: string | null;
+  live_searches_executed: number;
+  controlled_evidence_records_evaluated: number;
+}
+
+export interface BenchmarkScenarioTrial {
+  scenario_id: string;
+  domain?: string;
+  failure_mode_category?: string;
+  test_type: string;
+  claim: string;
+  expected_verdict: string;
+  predicted_verdict: string;
+  passed: boolean;
+  exact_pass?: boolean;
+  policy_normalized_pass?: boolean;
+  exact_match?: boolean;
+  policy_normalized_match?: boolean;
+  equivalence_reason?: string | null;
+  expected_explanation?: string;
+  engine_explanation?: string;
+  evidence_excerpts?: Array<{
+    evidence_id?: string;
+    source_title?: string;
+    citation_text?: string;
+    published_date?: string | null;
+  }>;
+  propositions?: Array<{
+    proposition_id: string;
+    original_text_span: string;
+    subject?: string;
+    predicate?: string;
+    object?: string;
+  }> | null;
+  proposition_results?: Array<{
+    proposition_id: string;
+    verdict: string;
+    supporting_evidence_ids: string[];
+    contradicting_evidence_ids: string[];
+    explanation?: string;
+  }> | null;
+  temporal_metadata?: {
+    change_date?: string;
+    old_value?: string;
+    new_value?: string;
+  };
+  evaluation_as_of?: string | null;
+}
+
 export interface BenchmarkReport {
   benchmark_id: string;
+  benchmark_timestamp?: string | null;
+  evaluation_as_of?: string | null;
   total_scenarios: number;
-  recovery_rate: number;
-  recovery_rate_ci_95: [number, number];
+  total_trials: number;
+  recovery_rate: number | null;
+  recovery_rate_ci_95: [number, number] | null;
   mean_catch_up_latency: number;
-  stale_detection_rate: number;
-  fresh_acceptance_rate: number;
-  false_stale_detection_rate: number;
-  parent_verdict_accuracy?: number;
-  parent_verdict_accuracy_ci_95?: [number, number];
-  abstention_rate?: number;
+  stale_detection_rate: number | null;
+  fresh_acceptance_rate: number | null;
+  fresh_precision?: number | null;
+  false_stale_detection_rate: number | null;
+  false_alarm_rate?: number | null;
+  parent_verdict_accuracy?: number | null;
+  parent_verdict_accuracy_ci_95?: [number, number] | null;
+  abstention_rate?: number | null;
+  abstention_fidelity?: number | null;
+  metrics_breakdown?: Record<string, BenchmarkMetricDetail>;
+  execution_provenance?: BenchmarkExecutionProvenance;
   category_metrics?: Record<string, any>;
-  scenario_results: Array<{
-    scenario_id: string;
-    test_type: string;
-    claim: string;
-    expected_verdict: string;
-    predicted_verdict: string;
-    passed: boolean;
-  }>;
+  scenario_results: BenchmarkScenarioTrial[];
   summary: string;
 }
 

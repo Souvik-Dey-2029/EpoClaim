@@ -35,9 +35,19 @@ wheels/
 # Testing & Coverage
 .pytest_cache/
 .coverage
+.coverage.*
 htmlcov/
 .tox/
 .cache/
+test-results/
+test_results/
+reports/
+screenshots/
+docs/screenshots/
+*.log
+*.tmp
+tmp/
+scratch/
 
 # Local SQLite Database Files & Runtime State
 epoclaim.db

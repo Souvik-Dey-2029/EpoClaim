@@ -311,6 +311,24 @@ class ClaimVerificationService:
             prop_results = self.verify_propositions(claim.propositions, clean_records, model, llm_scores_map=llm_scores_map)
             result.proposition_results = prop_results
 
+            # Collect evidence IDs from all verified propositions
+            prop_sup_ids = set()
+            prop_contra_ids = set()
+            for pr in prop_results:
+                prop_sup_ids.update(pr.supporting_evidence_ids)
+                prop_contra_ids.update(pr.contradicting_evidence_ids)
+
+            # Ensure supporting and contradicting lists include evidence identified at proposition level
+            existing_sup_ids = {r.evidence_id for r in supporting}
+            existing_contra_ids = {r.evidence_id for r in contradicting}
+            for rec in clean_records:
+                if rec.evidence_id in prop_sup_ids and rec.evidence_id not in existing_sup_ids:
+                    supporting.append(rec)
+                    existing_sup_ids.add(rec.evidence_id)
+                if rec.evidence_id in prop_contra_ids and rec.evidence_id not in existing_contra_ids:
+                    contradicting.append(rec)
+                    existing_contra_ids.add(rec.evidence_id)
+
             # Compute aggregated parent verdict based on proposition outcomes
             parent_verdict, parent_explanation = self.aggregate_proposition_verdicts(prop_results)
             result.verdict = parent_verdict

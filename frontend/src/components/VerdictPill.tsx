@@ -15,57 +15,64 @@ export function VerdictPill({
         return {
           label: "Supported",
           symbol: "✓",
-          bg: "#174A35", // Deep emerald
-          text: "#FFFFFF",
-          border: "#2E7D32",
+          bg: "rgba(16, 75, 45, 0.45)",
+          text: "#4ade80",
+          border: "rgba(74, 222, 128, 0.35)",
+          glow: "rgba(74, 222, 128, 0.15)",
         };
       case "PARTIALLY_SUPPORTED":
         return {
           label: "Partially Supported",
           symbol: "◐",
-          bg: "#C07A18", // Amber
-          text: "#FFFFFF",
-          border: "#D97706",
+          bg: "rgba(161, 98, 7, 0.45)",
+          text: "#fde047",
+          border: "rgba(250, 204, 21, 0.35)",
+          glow: "rgba(250, 204, 21, 0.15)",
         };
       case "OUTDATED":
         return {
           label: "Outdated / Stale",
           symbol: "⏳",
-          bg: "#A74735", // Rust red
-          text: "#FFFFFF",
-          border: "#DC2626",
+          bg: "rgba(153, 27, 27, 0.45)",
+          text: "#f87171",
+          border: "rgba(248, 113, 113, 0.4)",
+          glow: "rgba(239, 68, 68, 0.15)",
         };
       case "CONTRADICTED":
         return {
           label: "Contradicted",
           symbol: "✗",
-          bg: "#8C2D25", // Dark rust red
-          text: "#FFFFFF",
-          border: "#991B1B",
+          bg: "rgba(127, 29, 29, 0.5)",
+          text: "#fca5a5",
+          border: "rgba(248, 113, 113, 0.4)",
+          glow: "rgba(239, 68, 68, 0.15)",
         };
       case "INSUFFICIENT_EVIDENCE":
         return {
           label: "Unconfirmed",
           symbol: "⊘",
-          bg: "#5D5443", // Muted ochre
-          text: "#FFFFFF",
-          border: "#8C7B5D",
+          bg: "rgba(68, 64, 60, 0.5)",
+          text: "#d6d3d1",
+          border: "rgba(168, 162, 158, 0.3)",
+          glow: "rgba(168, 162, 158, 0.1)",
         };
       case "CONFLICTING":
         return {
-          label: "Conflicting Evidence",
+          label: "Conflicting",
           symbol: "⇄",
-          bg: "#4A1D96",
-          text: "#FFFFFF",
-          border: "#9333EA",
+          bg: "rgba(88, 28, 135, 0.45)",
+          text: "#d8b4fe",
+          border: "rgba(192, 132, 252, 0.35)",
+          glow: "rgba(192, 132, 252, 0.15)",
         };
       default:
         return {
           label: "Unverified",
           symbol: "—",
-          bg: "#5D5443", // Muted ochre
-          text: "#FFFFFF",
-          border: "#8C7B5D",
+          bg: "rgba(68, 64, 60, 0.5)",
+          text: "#d6d3d1",
+          border: "rgba(168, 162, 158, 0.3)",
+          glow: "rgba(168, 162, 158, 0.1)",
         };
     }
   };
@@ -73,9 +80,9 @@ export function VerdictPill({
   const config = getVerdictConfig(verdict);
 
   const sizeStyles = {
-    sm: "px-2 py-0.5 text-xs font-mono tracking-wider",
-    md: "px-3 py-1 text-xs font-mono font-bold tracking-wider",
-    lg: "px-4 py-1.5 text-sm font-mono font-bold tracking-widest",
+    sm: "px-2.5 py-1 text-[11px] font-mono tracking-wider",
+    md: "px-3.5 py-1.5 text-xs font-mono font-bold tracking-wider",
+    lg: "px-4.5 py-2 text-sm font-mono font-bold tracking-widest",
     xl: "px-6 py-2.5 text-base font-mono font-black tracking-widest",
   };
 
@@ -85,11 +92,18 @@ export function VerdictPill({
       style={{
         backgroundColor: config.bg,
         color: config.text,
-        border: `1.5px solid ${config.border}`,
-        boxShadow: "2px 2px 0px rgba(37, 40, 32, 0.4)",
+        border: `1px solid ${config.border}`,
+        backdropFilter: "blur(12px)",
+        WebkitBackdropFilter: "blur(12px)",
+        boxShadow: `0 2px 10px ${config.glow}, inset 0 1px 1px rgba(255, 255, 255, 0.12)`,
+        borderRadius: "20px",
+        display: "inline-flex",
+        alignItems: "center",
+        fontWeight: 600,
+        textShadow: "0 1px 2px rgba(0, 0, 0, 0.4)",
       }}
     >
-      <span className="verdict-symbol mr-1.5">{config.symbol}</span>
+      <span className="verdict-symbol mr-1.5 opacity-90">{config.symbol}</span>
       <span className="verdict-label">{config.label}</span>
     </span>
   );

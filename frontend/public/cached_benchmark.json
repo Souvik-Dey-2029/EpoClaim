@@ -1,0 +1,2184 @@
+{
+  "benchmark_id": "bmk_5d14781a",
+  "benchmark_timestamp": "2026-11-10T15:27:03.785695+00:00",
+  "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00",
+  "total_scenarios": 18,
+  "total_trials": 36,
+  "recovery_rate": 1.0,
+  "recovery_rate_ci_95": [
+    0.8064,
+    1.0
+  ],
+  "mean_catch_up_latency": 0.0,
+  "stale_detection_rate": 1.0,
+  "fresh_acceptance_rate": 1.0,
+  "fresh_precision": 1.0,
+  "false_stale_detection_rate": 0.0,
+  "false_alarm_rate": 0.0,
+  "parent_verdict_accuracy": 1.0,
+  "parent_verdict_accuracy_ci_95": [
+    0.9036,
+    1.0
+  ],
+  "exact_verdict_accuracy": 0.9722,
+  "exact_verdict_accuracy_ci_95": [
+    0.8583,
+    0.9951
+  ],
+  "normalized_verdict_accuracy": 1.0,
+  "normalized_verdict_accuracy_ci_95": [
+    0.9036,
+    1.0
+  ],
+  "abstention_rate": 0.1111,
+  "abstention_fidelity": 1.0,
+  "metrics_breakdown": {
+    "stale_detection": {
+      "metric_name": "Stale Recall",
+      "score": 1.0,
+      "numerator": 6,
+      "denominator": 6,
+      "population": "Stale / Outdated Trials (Expected OUTDATED or CONTRADICTED)",
+      "ci_95": [
+        0.6097,
+        1.0
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of superseded or outdated statements successfully flagged as OUTDATED/CONTRADICTED."
+    },
+    "fresh_acceptance": {
+      "metric_name": "Fresh Acceptance Rate",
+      "score": 1.0,
+      "numerator": 16,
+      "denominator": 16,
+      "population": "Fresh Supported Trials (Expected SUPPORTED)",
+      "ci_95": [
+        0.8064,
+        1.0
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of valid fresh assertions correctly confirmed as SUPPORTED (Fresh Supported Recall)."
+    },
+    "fresh_precision": {
+      "metric_name": "Fresh Precision",
+      "score": 1.0,
+      "numerator": 16,
+      "denominator": 16,
+      "population": "Fresh Trials Predicted SUPPORTED",
+      "ci_95": [
+        0.8064,
+        1.0
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of fresh assertions predicted as SUPPORTED that were truly expected to be SUPPORTED."
+    },
+    "false_stale": {
+      "metric_name": "False Stale Rate",
+      "score": 0.0,
+      "numerator": 0,
+      "denominator": 18,
+      "population": "All Fresh / Valid Trials",
+      "ci_95": [
+        0.0,
+        0.1759
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of fresh assertions mistakenly degraded or flagged as expired/outdated."
+    },
+    "false_alarm": {
+      "metric_name": "False Alarm Rate (Strict)",
+      "score": 0.0,
+      "numerator": 0,
+      "denominator": 18,
+      "population": "All Fresh / Valid Trials",
+      "ci_95": [
+        0.0,
+        0.1759
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of fresh assertions falsely flagged as either OUTDATED or CONTRADICTED."
+    },
+    "exact_accuracy": {
+      "metric_name": "Exact Verdict Accuracy",
+      "score": 0.9722,
+      "numerator": 35,
+      "denominator": 36,
+      "population": "All Evaluated Trials",
+      "ci_95": [
+        0.8583,
+        0.9951
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of trials where predicted verdict matched expected ground truth exactly (no policy normalization)."
+    },
+    "normalized_accuracy": {
+      "metric_name": "Policy-Normalized Accuracy",
+      "score": 1.0,
+      "numerator": 36,
+      "denominator": 36,
+      "population": "All Evaluated Trials",
+      "ci_95": [
+        0.9036,
+        1.0
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of trials matching ground truth under documented temporal policy equivalence (e.g. past state transition interval bounds)."
+    },
+    "parent_accuracy": {
+      "metric_name": "Overall Verdict Accuracy",
+      "score": 1.0,
+      "numerator": 36,
+      "denominator": 36,
+      "population": "All Evaluated Trials",
+      "ci_95": [
+        0.9036,
+        1.0
+      ],
+      "status": "MEASURED",
+      "explanation": "Standard benchmark accuracy combining exact matches and validated policy-normalized equivalences."
+    },
+    "abstention_rate": {
+      "metric_name": "Overall Abstention Rate",
+      "score": 0.1111,
+      "numerator": 4,
+      "denominator": 36,
+      "population": "All Evaluated Trials",
+      "ci_95": [
+        0.0441,
+        0.2532
+      ],
+      "status": "MEASURED",
+      "explanation": "Proportion of all evaluated trials where the engine abstained and returned INSUFFICIENT_EVIDENCE."
+    },
+    "abstention": {
+      "metric_name": "Abstention Fidelity",
+      "score": 1.0,
+      "numerator": 4,
+      "denominator": 4,
+      "population": "Unverifiable / Missing Evidence Trials (Expected INSUFFICIENT_EVIDENCE)",
+      "ci_95": [
+        0.5101,
+        1.0
+      ],
+      "status": "MEASURED",
+      "explanation": "Evaluated across 4 unverified/uncertain fact scenarios (4 properly abstained)."
+    }
+  },
+  "execution_provenance": {
+    "retrieval_mode": "controlled_fixtures",
+    "semantic_mode": "deterministic_semantic",
+    "bifrost_configured": true,
+    "bifrost_active": false,
+    "bifrost_model": "gemini-3.5-flash",
+    "fallback_used": true,
+    "fallback_reason": "Connection refused to Bifrost gateway at localhost:8080; executed via GeneralSemanticVerifier.",
+    "live_searches_executed": 0,
+    "controlled_evidence_records_evaluated": 54
+  },
+  "category_metrics": {
+    "01": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "02": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "03": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "04": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "05": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "06": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "07": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "08": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "09": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "10": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "11": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "12": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "13": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "14": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 0.5,
+      "passed": 2,
+      "total": 2
+    },
+    "15": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "16": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "17": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    },
+    "18": {
+      "accuracy": 1.0,
+      "normalized_accuracy": 1.0,
+      "exact_accuracy": 1.0,
+      "passed": 2,
+      "total": 2
+    }
+  },
+  "confusion_matrix": {
+    "SUPPORTED": {
+      "SUPPORTED": 25,
+      "PARTIALLY_SUPPORTED": 0,
+      "CONTRADICTED": 0,
+      "OUTDATED": 0,
+      "INSUFFICIENT_EVIDENCE": 0
+    },
+    "PARTIALLY_SUPPORTED": {
+      "SUPPORTED": 0,
+      "PARTIALLY_SUPPORTED": 1,
+      "CONTRADICTED": 0,
+      "OUTDATED": 0,
+      "INSUFFICIENT_EVIDENCE": 0
+    },
+    "CONTRADICTED": {
+      "SUPPORTED": 0,
+      "PARTIALLY_SUPPORTED": 0,
+      "CONTRADICTED": 1,
+      "OUTDATED": 1,
+      "INSUFFICIENT_EVIDENCE": 0
+    },
+    "OUTDATED": {
+      "SUPPORTED": 0,
+      "PARTIALLY_SUPPORTED": 0,
+      "CONTRADICTED": 0,
+      "OUTDATED": 4,
+      "INSUFFICIENT_EVIDENCE": 0
+    },
+    "INSUFFICIENT_EVIDENCE": {
+      "SUPPORTED": 0,
+      "PARTIALLY_SUPPORTED": 0,
+      "CONTRADICTED": 0,
+      "OUTDATED": 0,
+      "INSUFFICIENT_EVIDENCE": 4
+    }
+  },
+  "scenario_results": [
+    {
+      "scenario_id": "scen_01_leadership",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Mira Murati is the CEO of OpenAI.",
+      "expected_verdict": "OUTDATED",
+      "predicted_verdict": "OUTDATED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Conflicting evidence detected: supported by 1 source(s) but contradicted by 1 source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Reinstatement of CEO (Nov 29, 2023)",
+          "citation_text": "Sam Altman has returned as CEO of OpenAI with a newly reconstituted board.",
+          "published_date": "2023-11-29T18:00:00+00:00",
+          "publication_time": "2023-11-29T18:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:03.792136+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Interim leadership announcement (Nov 17, 2023)",
+          "citation_text": "OpenAI announced Mira Murati was appointed interim CEO following board actions.",
+          "published_date": "2023-11-17T12:00:00+00:00",
+          "publication_time": "2023-11-17T12:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:03.792083+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_5196a970",
+          "original_text_span": "Mira Murati is the CEO of OpenAI.",
+          "subject": "Mira Murati",
+          "predicate": "is",
+          "object": "the CEO of OpenAI"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2023-11-29T00:00:00Z",
+        "old_value": "Mira Murati",
+        "new_value": "Sam Altman"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_01_leadership",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Sam Altman is the CEO of OpenAI.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Reinstatement of CEO (Nov 29, 2023)",
+          "citation_text": "Sam Altman has returned as CEO of OpenAI with a newly reconstituted board.",
+          "published_date": "2023-11-29T18:00:00+00:00",
+          "publication_time": "2023-11-29T18:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:08.732153+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_33a39dc6",
+          "original_text_span": "Sam Altman is the CEO of OpenAI.",
+          "subject": "Sam Altman",
+          "predicate": "is",
+          "object": "the CEO of OpenAI"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2023-11-29T00:00:00Z",
+        "old_value": "Mira Murati",
+        "new_value": "Sam Altman"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_02_software_version",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Python 3.11 is the latest stable release of Python.",
+      "expected_verdict": "OUTDATED",
+      "predicted_verdict": "OUTDATED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Conflicting evidence detected: supported by 1 source(s) but contradicted by 1 source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Python 3.12 Final Release",
+          "citation_text": "Python 3.12 is officially released and is now the latest stable version.",
+          "published_date": "2023-10-02T00:00:00+00:00",
+          "publication_time": "2023-10-02T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:13.651391+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Python 3.11 Release Announcement",
+          "citation_text": "Python 3.11 is released as the newest stable version with major performance gains.",
+          "published_date": "2022-10-24T00:00:00+00:00",
+          "publication_time": "2022-10-24T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:13.651354+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_728a45f3",
+          "original_text_span": "Python 3.11 is the latest stable release of Python.",
+          "subject": "Python 3.11",
+          "predicate": "is",
+          "object": "the latest stable release of Python"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2023-10-02T00:00:00Z",
+        "old_value": "3.11",
+        "new_value": "3.12"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_02_software_version",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Python 3.12 is the latest stable release of Python.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Conflicting evidence detected: supported by 1 source(s) but contradicted by 1 source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Python 3.12 Final Release",
+          "citation_text": "Python 3.12 is officially released and is now the latest stable version.",
+          "published_date": "2023-10-02T00:00:00+00:00",
+          "publication_time": "2023-10-02T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:18.785942+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Python 3.11 Release Announcement",
+          "citation_text": "Python 3.11 is released as the newest stable version with major performance gains.",
+          "published_date": "2022-10-24T00:00:00+00:00",
+          "publication_time": "2022-10-24T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:18.785878+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_c6f4b416",
+          "original_text_span": "Python 3.12 is the latest stable release of Python.",
+          "subject": "Python 3.12",
+          "predicate": "is",
+          "object": "the latest stable release of Python"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2023-10-02T00:00:00Z",
+        "old_value": "3.11",
+        "new_value": "3.12"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_03_sports_champion",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "France is the reigning FIFA World Cup champion.",
+      "expected_verdict": "OUTDATED",
+      "predicted_verdict": "OUTDATED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Conflicting evidence detected: supported by 1 source(s) but contradicted by 1 source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Argentina wins 2022 World Cup",
+          "citation_text": "Argentina defeated France in the 2022 final in Qatar to become champions.",
+          "published_date": "2022-12-18T20:00:00+00:00",
+          "publication_time": "2022-12-18T20:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:23.836331+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "France lifts 2018 trophy",
+          "citation_text": "France won the 2018 World Cup defeating Croatia in Moscow.",
+          "published_date": "2018-07-15T00:00:00+00:00",
+          "publication_time": "2018-07-15T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:23.836296+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_8e257f99",
+          "original_text_span": "France is the reigning FIFA World Cup champion.",
+          "subject": "France",
+          "predicate": "is",
+          "object": "the reigning FIFA World Cup champion"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2022-12-18T00:00:00Z",
+        "old_value": "France",
+        "new_value": "Argentina"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_03_sports_champion",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Argentina is the reigning FIFA World Cup champion.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Argentina wins 2022 World Cup",
+          "citation_text": "Argentina defeated France in the 2022 final in Qatar to become champions.",
+          "published_date": "2022-12-18T20:00:00+00:00",
+          "publication_time": "2022-12-18T20:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:29.022324+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_b26af654",
+          "original_text_span": "Argentina is the reigning FIFA World Cup champion.",
+          "subject": "Argentina",
+          "predicate": "is",
+          "object": "the reigning FIFA World Cup champion"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2022-12-18T00:00:00Z",
+        "old_value": "France",
+        "new_value": "Argentina"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_04_historical_invariant",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Apollo 11 landed on the moon on July 20, 1969.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Apollo 11 Mission Overview",
+          "citation_text": "On July 20, 1969, American astronauts Neil Armstrong and Buzz Aldrin landed the Apollo Lunar Module Eagle on the Moon.",
+          "published_date": "2000-01-01T00:00:00+00:00",
+          "publication_time": "2000-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:34.209099+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_0f5bc491",
+          "original_text_span": "Apollo 11 landed on the moon on July 20, 1969.",
+          "subject": "Apollo",
+          "predicate": "asserts",
+          "object": "11 landed on the moon on July 20, 1969"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1969-07-20T20:17:00Z",
+        "old_value": "July 20, 1969",
+        "new_value": "July 20, 1969"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_04_historical_invariant",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Apollo 11 landed on the moon on July 20, 1969.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Apollo 11 Mission Overview",
+          "citation_text": "On July 20, 1969, American astronauts Neil Armstrong and Buzz Aldrin landed the Apollo Lunar Module Eagle on the Moon.",
+          "published_date": "2000-01-01T00:00:00+00:00",
+          "publication_time": "2000-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:39.405664+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_43f94278",
+          "original_text_span": "Apollo 11 landed on the moon on July 20, 1969.",
+          "subject": "Apollo",
+          "predicate": "asserts",
+          "object": "11 landed on the moon on July 20, 1969"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1969-07-20T20:17:00Z",
+        "old_value": "July 20, 1969",
+        "new_value": "July 20, 1969"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_05_pure_falsehood",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Albert Einstein won the Nobel Prize in Chemistry in 1921.",
+      "expected_verdict": "CONTRADICTED",
+      "predicted_verdict": "CONTRADICTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is directly contradicted by 1 source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "The Nobel Prize in Physics 1921",
+          "citation_text": "The Nobel Prize in Physics 1921 was awarded to Albert Einstein for his services to Theoretical Physics.",
+          "published_date": "2020-05-01T00:00:00+00:00",
+          "publication_time": "2020-05-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:44.446530+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_96f0ca04",
+          "original_text_span": "Albert Einstein won the Nobel Prize in Chemistry in 1921.",
+          "subject": "Albert Einstein",
+          "predicate": "won",
+          "object": "the Nobel Prize in Chemistry in 1921"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1921-11-09T00:00:00Z",
+        "old_value": "in 1921",
+        "new_value": "in Physics, never Chemistry"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_05_pure_falsehood",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Albert Einstein won the Nobel Prize in Physics for his explanation of the photoelectric effect.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "The Nobel Prize in Physics 1921",
+          "citation_text": "The Nobel Prize in Physics 1921 was awarded to Albert Einstein for his services to Theoretical Physics.",
+          "published_date": "2020-05-01T00:00:00+00:00",
+          "publication_time": "2020-05-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:49.416203+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_634a8196",
+          "original_text_span": "Albert Einstein won the Nobel Prize in Physics for his explanation of the photoelectric effect.",
+          "subject": "Albert Einstein",
+          "predicate": "won",
+          "object": "the Nobel Prize in Physics for his explanation of the photoelectric effect"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1921-11-09T00:00:00Z",
+        "old_value": "in 1921",
+        "new_value": "in Physics, never Chemistry"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_06_gpt41_compound_failure",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "OpenAI's GPT-4.1 remains the latest model in the GPT-4 series and is available through the API.",
+      "expected_verdict": "PARTIALLY_SUPPORTED",
+      "predicted_verdict": "PARTIALLY_SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Partially supported: 1/2 propositions verified, while 0 contradicted, 1 unconfirmed, 0 outdated.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "OpenAI Help Center Release Notes",
+          "citation_text": "GPT-4.1 is available in the API.",
+          "published_date": "2026-01-29T00:00:00+00:00",
+          "publication_time": "2026-01-29T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:54.497551+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Introducing GPT-4.1 in the API",
+          "citation_text": "Note that GPT-4.1 will only be available via the API.",
+          "published_date": "2025-04-14T00:00:00+00:00",
+          "publication_time": "2025-04-14T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:54.497651+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_90b18960",
+          "original_text_span": "OpenAI's GPT-4.1 remains the latest model in the GPT-4 series",
+          "subject": "OpenAI's GPT-4.1",
+          "predicate": "remains",
+          "object": "the latest model in the GPT-4 series"
+        },
+        {
+          "proposition_id": "prop_a5274eee",
+          "original_text_span": "and is available through the API.",
+          "subject": "OpenAI's GPT-4.1",
+          "predicate": "is",
+          "object": "available through the API"
+        }
+      ],
+      "proposition_results": [
+        {
+          "proposition_id": "prop_90b18960",
+          "verdict": "INSUFFICIENT_EVIDENCE",
+          "supporting_evidence_ids": [],
+          "contradicting_evidence_ids": [],
+          "explanation": "Insufficient evidence to corroborate or refute this proposition."
+        },
+        {
+          "proposition_id": "prop_a5274eee",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1",
+            "doc_2_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 2 source(s)."
+        }
+      ],
+      "temporal_metadata": {
+        "change_date": "2026-02-13T00:00:00Z",
+        "old_value": "latest model and available via API",
+        "new_value": "available via API but not confirmed as latest"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_06_gpt41_compound_failure",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "OpenAI's GPT-4.1 is available through the API.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 2 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "OpenAI Help Center Release Notes",
+          "citation_text": "GPT-4.1 is available in the API.",
+          "published_date": "2026-01-29T00:00:00+00:00",
+          "publication_time": "2026-01-29T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:59.707572+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Introducing GPT-4.1 in the API",
+          "citation_text": "Note that GPT-4.1 will only be available via the API.",
+          "published_date": "2025-04-14T00:00:00+00:00",
+          "publication_time": "2025-04-14T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:27:59.707626+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_dad1594d",
+          "original_text_span": "OpenAI's GPT-4.1 is available through the API.",
+          "subject": "OpenAI's GPT-4.1",
+          "predicate": "is",
+          "object": "available through the API"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2026-02-13T00:00:00Z",
+        "old_value": "latest model and available via API",
+        "new_value": "available via API but not confirmed as latest"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_07_compound_both_supported",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Neil Armstrong was an American astronaut and is the first person to walk on the Moon.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "All 2 atomic propositions are supported by evidence.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "NASA Apollo History",
+          "citation_text": "Neil Armstrong was an American astronaut and is the first person to walk on the Moon.",
+          "published_date": "2021-01-01T00:00:00+00:00",
+          "publication_time": "2021-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:04.616059+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_9a514f97",
+          "original_text_span": "Neil Armstrong was an American astronaut",
+          "subject": "Neil Armstrong",
+          "predicate": "was",
+          "object": "an American astronaut"
+        },
+        {
+          "proposition_id": "prop_69a76936",
+          "original_text_span": "and is the first person to walk on the Moon.",
+          "subject": "Neil Armstrong",
+          "predicate": "is",
+          "object": "the first person to walk on the Moon"
+        }
+      ],
+      "proposition_results": [
+        {
+          "proposition_id": "prop_9a514f97",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        },
+        {
+          "proposition_id": "prop_69a76936",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        }
+      ],
+      "temporal_metadata": {
+        "change_date": "1969-07-20T20:17:00Z",
+        "old_value": "American astronaut and walked on the moon",
+        "new_value": "American astronaut and walked on the moon"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_07_compound_both_supported",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Neil Armstrong was an American astronaut and walked on the Moon.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "NASA Apollo History",
+          "citation_text": "Neil Armstrong was an American astronaut and is the first person to walk on the Moon.",
+          "published_date": "2021-01-01T00:00:00+00:00",
+          "publication_time": "2021-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:09.764264+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_473e1761",
+          "original_text_span": "Neil Armstrong was an American astronaut and walked on the Moon.",
+          "subject": "Neil Armstrong",
+          "predicate": "was",
+          "object": "an American astronaut and walked on the Moon"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1969-07-20T20:17:00Z",
+        "old_value": "American astronaut and walked on the moon",
+        "new_value": "American astronaut and walked on the moon"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_08_contrastive_deprecation",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "The legacy v1 API was deprecated, but the replacement v2 API is supported.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "All 2 atomic propositions are supported by evidence.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "API v1 Deprecation Policy Notice",
+          "citation_text": "The legacy v1 API was officially deprecated and will sunset for all external consumers.",
+          "published_date": "2024-01-15T00:00:00+00:00",
+          "publication_time": "2024-01-15T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:14.911833+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "API v2 Production Support Specification",
+          "citation_text": "Meanwhile, the replacement v2 API is actively supported and recommended for all production workloads.",
+          "published_date": "2024-02-01T00:00:00+00:00",
+          "publication_time": "2024-02-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:14.911899+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_07fd33d0",
+          "original_text_span": "The legacy v1 API was deprecated",
+          "subject": "The legacy v1 API",
+          "predicate": "was",
+          "object": "deprecated"
+        },
+        {
+          "proposition_id": "prop_a98c422e",
+          "original_text_span": "the replacement v2 API is supported.",
+          "subject": "the replacement v2 API",
+          "predicate": "is",
+          "object": "supported"
+        }
+      ],
+      "proposition_results": [
+        {
+          "proposition_id": "prop_07fd33d0",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        },
+        {
+          "proposition_id": "prop_a98c422e",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_2_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        }
+      ],
+      "temporal_metadata": {
+        "change_date": "2024-01-01T00:00:00Z",
+        "old_value": "previous deprecated but replacement supported",
+        "new_value": "previous deprecated but replacement supported"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_08_contrastive_deprecation",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "The legacy v1 API was deprecated, but the replacement v2 API is supported.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "All 2 atomic propositions are supported by evidence.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "API v1 Deprecation Policy Notice",
+          "citation_text": "The legacy v1 API was officially deprecated and will sunset for all external consumers.",
+          "published_date": "2024-01-15T00:00:00+00:00",
+          "publication_time": "2024-01-15T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:20.110233+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "API v2 Production Support Specification",
+          "citation_text": "Meanwhile, the replacement v2 API is actively supported and recommended for all production workloads.",
+          "published_date": "2024-02-01T00:00:00+00:00",
+          "publication_time": "2024-02-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:20.110352+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_0b59adbf",
+          "original_text_span": "The legacy v1 API was deprecated",
+          "subject": "The legacy v1 API",
+          "predicate": "was",
+          "object": "deprecated"
+        },
+        {
+          "proposition_id": "prop_18132925",
+          "original_text_span": "the replacement v2 API is supported.",
+          "subject": "the replacement v2 API",
+          "predicate": "is",
+          "object": "supported"
+        }
+      ],
+      "proposition_results": [
+        {
+          "proposition_id": "prop_0b59adbf",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        },
+        {
+          "proposition_id": "prop_18132925",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_2_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        }
+      ],
+      "temporal_metadata": {
+        "change_date": "2024-01-01T00:00:00Z",
+        "old_value": "previous deprecated but replacement supported",
+        "new_value": "previous deprecated but replacement supported"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_09_negation_availability",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "The model is not available in ChatGPT but remains available through the API.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "All 2 atomic propositions are supported by evidence.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Model Availability Update",
+          "citation_text": "The model is not available in ChatGPT but remains available through the API.",
+          "published_date": "2026-01-29T00:00:00+00:00",
+          "publication_time": "2026-01-29T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:25.302723+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_828382f8",
+          "original_text_span": "The model is not available in ChatGPT",
+          "subject": "The model",
+          "predicate": "is",
+          "object": "not available in ChatGPT"
+        },
+        {
+          "proposition_id": "prop_ef4e3fe0",
+          "original_text_span": "remains available through the API.",
+          "subject": "The model",
+          "predicate": "remains",
+          "object": "available through the API."
+        }
+      ],
+      "proposition_results": [
+        {
+          "proposition_id": "prop_828382f8",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        },
+        {
+          "proposition_id": "prop_ef4e3fe0",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        }
+      ],
+      "temporal_metadata": {
+        "change_date": "2026-02-13T00:00:00Z",
+        "old_value": "not available in ChatGPT but remains available in API",
+        "new_value": "not available in ChatGPT but remains available in API"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_09_negation_availability",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "The model is not available in ChatGPT but remains available through the API.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "All 2 atomic propositions are supported by evidence.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Model Availability Update",
+          "citation_text": "The model is not available in ChatGPT but remains available through the API.",
+          "published_date": "2026-01-29T00:00:00+00:00",
+          "publication_time": "2026-01-29T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:30.518704+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_ba89bb9f",
+          "original_text_span": "The model is not available in ChatGPT",
+          "subject": "The model",
+          "predicate": "is",
+          "object": "not available in ChatGPT"
+        },
+        {
+          "proposition_id": "prop_34fbfbf8",
+          "original_text_span": "remains available through the API.",
+          "subject": "The model",
+          "predicate": "remains",
+          "object": "available through the API."
+        }
+      ],
+      "proposition_results": [
+        {
+          "proposition_id": "prop_ba89bb9f",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        },
+        {
+          "proposition_id": "prop_34fbfbf8",
+          "verdict": "SUPPORTED",
+          "supporting_evidence_ids": [
+            "doc_1_s1"
+          ],
+          "contradicting_evidence_ids": [],
+          "explanation": "Proposition verified and supported by 1 source(s)."
+        }
+      ],
+      "temporal_metadata": {
+        "change_date": "2026-02-13T00:00:00Z",
+        "old_value": "not available in ChatGPT but remains available in API",
+        "new_value": "not available in ChatGPT but remains available in API"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_10_missing_dates_uncertainty",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Quantum Corp is valued at 50 billion dollars.",
+      "expected_verdict": "INSUFFICIENT_EVIDENCE",
+      "predicted_verdict": "INSUFFICIENT_EVIDENCE",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Available evidence mentions the subject but is insufficient to confirm or refute the claim.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_b877",
+          "source_title": "Blog Speculation",
+          "citation_text": "Some analysts discuss whether Quantum Corp could reach higher valuations.",
+          "published_date": null,
+          "publication_time": null,
+          "retrieved_at": "2026-11-10T15:27:03.785683+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_36aeef09",
+          "original_text_span": "Quantum Corp is valued at 50 billion dollars.",
+          "subject": "Quantum Corp",
+          "predicate": "is",
+          "object": "valued at 50 billion dollars"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2025-06-01T00:00:00Z",
+        "old_value": "50 billion dollars",
+        "new_value": "uncertain"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_10_missing_dates_uncertainty",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Quantum Corp is valued at 50 billion dollars.",
+      "expected_verdict": "INSUFFICIENT_EVIDENCE",
+      "predicted_verdict": "INSUFFICIENT_EVIDENCE",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Available evidence mentions the subject but is insufficient to confirm or refute the claim.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_c2be",
+          "source_title": "Blog Speculation",
+          "citation_text": "Some analysts discuss whether Quantum Corp could reach higher valuations.",
+          "published_date": null,
+          "publication_time": null,
+          "retrieved_at": "2026-11-10T15:27:03.785683+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_c144652a",
+          "original_text_span": "Quantum Corp is valued at 50 billion dollars.",
+          "subject": "Quantum Corp",
+          "predicate": "is",
+          "object": "valued at 50 billion dollars"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2025-06-01T00:00:00Z",
+        "old_value": "50 billion dollars",
+        "new_value": "uncertain"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_11_historical_fact_old_source",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "The Battle of Hastings was fought in 1066.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Medieval History Archives",
+          "citation_text": "The Battle of Hastings was fought on 14 October 1066 between the Norman-French army and the English army.",
+          "published_date": "2005-01-01T00:00:00+00:00",
+          "publication_time": "2005-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:45.991779+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_5ee1a9cd",
+          "original_text_span": "The Battle of Hastings was fought in 1066.",
+          "subject": "The Battle of Hastings",
+          "predicate": "was",
+          "object": "fought in 1066"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1066-10-14T00:00:00Z",
+        "old_value": "1066",
+        "new_value": "1066"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_11_historical_fact_old_source",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "The Battle of Hastings was fought in 1066.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Medieval History Archives",
+          "citation_text": "The Battle of Hastings was fought on 14 October 1066 between the Norman-French army and the English army.",
+          "published_date": "2005-01-01T00:00:00+00:00",
+          "publication_time": "2005-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:51.170806+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_f9564788",
+          "original_text_span": "The Battle of Hastings was fought in 1066.",
+          "subject": "The Battle of Hastings",
+          "predicate": "was",
+          "object": "fought in 1066"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1066-10-14T00:00:00Z",
+        "old_value": "1066",
+        "new_value": "1066"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_12_recent_source_describes_old_event",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "The Magna Carta was originally issued in 1215.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Historical Retrospective (2026 Analysis)",
+          "citation_text": "In a 2026 retrospective on constitutional history, scholars reaffirm that Magna Carta was granted by King John in 1215.",
+          "published_date": "2026-03-01T00:00:00+00:00",
+          "publication_time": "2026-03-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:28:56.292636+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_4bdc1527",
+          "original_text_span": "The Magna Carta was originally issued in 1215.",
+          "subject": "The Magna Carta",
+          "predicate": "was",
+          "object": "originally issued in 1215"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1215-06-15T00:00:00Z",
+        "old_value": "1215",
+        "new_value": "1215"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_12_recent_source_describes_old_event",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "The Magna Carta was originally issued in 1215.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Historical Retrospective (2026 Analysis)",
+          "citation_text": "In a 2026 retrospective on constitutional history, scholars reaffirm that Magna Carta was granted by King John in 1215.",
+          "published_date": "2026-03-01T00:00:00+00:00",
+          "publication_time": "2026-03-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:01.477470+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_f651a885",
+          "original_text_span": "The Magna Carta was originally issued in 1215.",
+          "subject": "The Magna Carta",
+          "predicate": "was",
+          "object": "originally issued in 1215"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "1215-06-15T00:00:00Z",
+        "old_value": "1215",
+        "new_value": "1215"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_13_point_in_time_inside_interval",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Barack Obama was the President of the United States in 2012.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "White House Presidential Archives",
+          "citation_text": "Barack Obama served as the 44th President of the United States from January 20, 2009 to January 20, 2017.",
+          "published_date": "2017-01-20T00:00:00+00:00",
+          "publication_time": "2017-01-20T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:06.615574+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_6a36e2d3",
+          "original_text_span": "Barack Obama was the President of the United States in 2012.",
+          "subject": "Barack Obama",
+          "predicate": "was",
+          "object": "the President of the United States in 2012"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2012-06-01T00:00:00Z",
+        "old_value": "President of the United States",
+        "new_value": "President of the United States"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_13_point_in_time_inside_interval",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Barack Obama was the President of the United States in 2012.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "White House Presidential Archives",
+          "citation_text": "Barack Obama served as the 44th President of the United States from January 20, 2009 to January 20, 2017.",
+          "published_date": "2017-01-20T00:00:00+00:00",
+          "publication_time": "2017-01-20T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:11.769723+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_7fa62b54",
+          "original_text_span": "Barack Obama was the President of the United States in 2012.",
+          "subject": "Barack Obama",
+          "predicate": "was",
+          "object": "the President of the United States in 2012"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2012-06-01T00:00:00Z",
+        "old_value": "President of the United States",
+        "new_value": "President of the United States"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_14_point_in_time_outside_interval",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Barack Obama was the President of the United States in 2024.",
+      "expected_verdict": "CONTRADICTED",
+      "predicted_verdict": "OUTDATED",
+      "passed": true,
+      "exact_pass": false,
+      "policy_normalized_pass": true,
+      "exact_match": false,
+      "policy_normalized_match": true,
+      "equivalence_reason": "Temporal Policy: Past state (presidency ended 2017) outside claimed interval (2024) is legitimately categorized as OUTDATED under chronological supersedence.",
+      "expected_explanation": "",
+      "engine_explanation": "Claim is directly contradicted by 1 source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "US History Records",
+          "citation_text": "Barack Obama concluded his two terms as President on January 20, 2017 and was succeeded by Donald Trump.",
+          "published_date": "2024-01-01T00:00:00+00:00",
+          "publication_time": "2024-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:16.824562+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_70704373",
+          "original_text_span": "Barack Obama was the President of the United States in 2024.",
+          "subject": "Barack Obama",
+          "predicate": "was",
+          "object": "the President of the United States in 2024"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2024-01-01T00:00:00Z",
+        "old_value": "President of the United States",
+        "new_value": "former President"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_14_point_in_time_outside_interval",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Barack Obama concluded his presidency in 2017.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "US History Records",
+          "citation_text": "Barack Obama concluded his two terms as President on January 20, 2017 and was succeeded by Donald Trump.",
+          "published_date": "2024-01-01T00:00:00+00:00",
+          "publication_time": "2024-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:21.931194+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_4271a9d1",
+          "original_text_span": "Barack Obama concluded his presidency in 2017.",
+          "subject": "Barack",
+          "predicate": "asserts",
+          "object": "Obama concluded his presidency in 2017"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2024-01-01T00:00:00Z",
+        "old_value": "President of the United States",
+        "new_value": "former President"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_15_syndicated_reprints_inflation",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Alpha Tech was acquired for 1 billion dollars.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Wire Service Release",
+          "citation_text": "Alpha Tech was acquired for 1 billion dollars in an all-cash transaction.",
+          "published_date": "2024-05-01T10:00:00+00:00",
+          "publication_time": "2024-05-01T10:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:26.742279+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_2316fdc1",
+          "original_text_span": "Alpha Tech was acquired for 1 billion dollars.",
+          "subject": "Alpha Tech",
+          "predicate": "was",
+          "object": "acquired for 1 billion dollars"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2024-05-01T00:00:00Z",
+        "old_value": "acquired for 1 billion dollars",
+        "new_value": "acquired for 1 billion dollars"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_15_syndicated_reprints_inflation",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Alpha Tech was acquired for 1 billion dollars.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Wire Service Release",
+          "citation_text": "Alpha Tech was acquired for 1 billion dollars in an all-cash transaction.",
+          "published_date": "2024-05-01T10:00:00+00:00",
+          "publication_time": "2024-05-01T10:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:31.674379+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_60d6bd33",
+          "original_text_span": "Alpha Tech was acquired for 1 billion dollars.",
+          "subject": "Alpha Tech",
+          "predicate": "was",
+          "object": "acquired for 1 billion dollars"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2024-05-01T00:00:00Z",
+        "old_value": "acquired for 1 billion dollars",
+        "new_value": "acquired for 1 billion dollars"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_16_independent_sources_agreement",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Quantum Corp is headquartered in Zurich.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 2 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Financial Times Swiss Tech Profile",
+          "citation_text": "From its headquarters in Zurich, Quantum Corp develops high-precision sensors.",
+          "published_date": "2023-06-15T00:00:00+00:00",
+          "publication_time": "2023-06-15T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:36.579360+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Swiss Commercial Registry",
+          "citation_text": "Quantum Corp maintains its official corporate seat and headquarters in Zurich, Switzerland.",
+          "published_date": "2023-01-01T00:00:00+00:00",
+          "publication_time": "2023-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:36.579330+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_60b3844b",
+          "original_text_span": "Quantum Corp is headquartered in Zurich.",
+          "subject": "Quantum Corp",
+          "predicate": "is",
+          "object": "headquartered in Zurich"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2023-01-01T00:00:00Z",
+        "old_value": "Zurich",
+        "new_value": "Zurich"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_16_independent_sources_agreement",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Quantum Corp is headquartered in Zurich.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 2 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Financial Times Swiss Tech Profile",
+          "citation_text": "From its headquarters in Zurich, Quantum Corp develops high-precision sensors.",
+          "published_date": "2023-06-15T00:00:00+00:00",
+          "publication_time": "2023-06-15T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:41.386436+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Swiss Commercial Registry",
+          "citation_text": "Quantum Corp maintains its official corporate seat and headquarters in Zurich, Switzerland.",
+          "published_date": "2023-01-01T00:00:00+00:00",
+          "publication_time": "2023-01-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:41.386406+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_0660dcf3",
+          "original_text_span": "Quantum Corp is headquartered in Zurich.",
+          "subject": "Quantum Corp",
+          "predicate": "is",
+          "object": "headquartered in Zurich"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2023-01-01T00:00:00Z",
+        "old_value": "Zurich",
+        "new_value": "Zurich"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_17_system_as_known_cutoff_protection",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Dr. Alice Smith is the lead researcher at Nova Dynamics.",
+      "expected_verdict": "OUTDATED",
+      "predicted_verdict": "OUTDATED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Conflicting evidence detected: supported by 1 source(s) but contradicted by 1 source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Research Team 2024 Announcement",
+          "citation_text": "Dr. Bob Jones has been appointed lead researcher, replacing Dr. Alice Smith.",
+          "published_date": "2024-06-01T00:00:00+00:00",
+          "publication_time": "2024-06-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:46.229517+00:00",
+          "valid_time_interval": null
+        },
+        {
+          "evidence_id": "doc_1_s1",
+          "source_title": "Research Team 2023",
+          "citation_text": "Dr. Alice Smith is the lead researcher heading robotics at Nova Dynamics.",
+          "published_date": "2023-05-01T00:00:00+00:00",
+          "publication_time": "2023-05-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:46.229486+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_f0793baf",
+          "original_text_span": "Dr. Alice Smith is the lead researcher at Nova Dynamics.",
+          "subject": "Dr. Alice Smith",
+          "predicate": "is",
+          "object": "the lead researcher at Nova Dynamics"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2024-06-01T00:00:00Z",
+        "old_value": "Dr. Alice Smith",
+        "new_value": "Dr. Bob Jones"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_17_system_as_known_cutoff_protection",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Dr. Bob Jones succeeded Dr. Alice Smith at Nova Dynamics.",
+      "expected_verdict": "SUPPORTED",
+      "predicted_verdict": "SUPPORTED",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Claim is verified and supported by 1 authoritative source(s).",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_2_s1",
+          "source_title": "Research Team 2024 Announcement",
+          "citation_text": "Dr. Bob Jones has been appointed lead researcher, replacing Dr. Alice Smith.",
+          "published_date": "2024-06-01T00:00:00+00:00",
+          "publication_time": "2024-06-01T00:00:00+00:00",
+          "retrieved_at": "2026-11-10T15:29:51.120505+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_0847ec77",
+          "original_text_span": "Dr. Bob Jones succeeded Dr. Alice Smith at Nova Dynamics.",
+          "subject": "Dr.",
+          "predicate": "asserts",
+          "object": "Bob Jones succeeded Dr. Alice Smith at Nova Dynamics"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2024-06-01T00:00:00Z",
+        "old_value": "Dr. Alice Smith",
+        "new_value": "Dr. Bob Jones"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_18_uncertain_temporal_bounds_honesty",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "stale",
+      "claim": "Starlight Energy deployed an operational commercial fusion reactor in late 2025.",
+      "expected_verdict": "INSUFFICIENT_EVIDENCE",
+      "predicted_verdict": "INSUFFICIENT_EVIDENCE",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Available evidence mentions the subject but is insufficient to confirm or refute the claim.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_82ef",
+          "source_title": "Press Speculation",
+          "citation_text": "Clean energy executives and external analysts discussed speculative hopes for future fusion milestones.",
+          "published_date": null,
+          "publication_time": null,
+          "retrieved_at": "2026-11-10T15:27:03.785683+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_7e68e2f8",
+          "original_text_span": "Starlight Energy deployed an operational commercial fusion reactor in late 2025.",
+          "subject": "Starlight",
+          "predicate": "asserts",
+          "object": "Energy deployed an operational commercial fusion reactor in late 2025"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2025-01-01T00:00:00Z",
+        "old_value": "operational in late 2025",
+        "new_value": "uncertain deployment timeline"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    },
+    {
+      "scenario_id": "scen_18_uncertain_temporal_bounds_honesty",
+      "domain": "general",
+      "failure_mode_category": "temporal_supersedence",
+      "test_type": "fresh",
+      "claim": "Starlight Energy announced planned testing without confirmed operational deployment.",
+      "expected_verdict": "INSUFFICIENT_EVIDENCE",
+      "predicted_verdict": "INSUFFICIENT_EVIDENCE",
+      "passed": true,
+      "exact_pass": true,
+      "policy_normalized_pass": true,
+      "exact_match": true,
+      "policy_normalized_match": true,
+      "equivalence_reason": null,
+      "expected_explanation": "",
+      "engine_explanation": "Available evidence mentions the subject but is insufficient to confirm or refute the claim.",
+      "evidence_excerpts": [
+        {
+          "evidence_id": "doc_9986",
+          "source_title": "Press Speculation",
+          "citation_text": "Clean energy executives and external analysts discussed speculative hopes for future fusion milestones.",
+          "published_date": null,
+          "publication_time": null,
+          "retrieved_at": "2026-11-10T15:27:03.785683+00:00",
+          "valid_time_interval": null
+        }
+      ],
+      "propositions": [
+        {
+          "proposition_id": "prop_c5b90aab",
+          "original_text_span": "Starlight Energy announced planned testing without confirmed operational deployment.",
+          "subject": "Starlight Energy",
+          "predicate": "announced",
+          "object": "planned testing without confirmed operational deployment"
+        }
+      ],
+      "proposition_results": null,
+      "temporal_metadata": {
+        "change_date": "2025-01-01T00:00:00Z",
+        "old_value": "operational in late 2025",
+        "new_value": "uncertain deployment timeline"
+      },
+      "evaluation_as_of": "2026-11-10T15:27:03.785683+00:00"
+    }
+  ],
+  "summary": "Benchmark bmk_5d14781a: Evaluated 18 scenarios (36 runs). Parent Accuracy: 100.0%, Stale Detection: 100.0%, Fresh Acceptance: 100.0%, Abstention: 11.1%, Fresh Recovery Wilson 95% CI: [0.81, 1.00]."
+}

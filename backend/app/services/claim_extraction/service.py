@@ -166,22 +166,27 @@ class ClaimExtractionService:
         return claims
 
     def _split_sentences_with_spans(self, text: str) -> List[Tuple[str, int, int]]:
-        """Split text into sentences while recording start and end offsets."""
+        """Split text into sentences while recording start and end offsets, protecting common abbreviations."""
+        # Protect abbreviations like Dr., Mr., Ms., Prof., Inc., etc. from sentence splitting
+        _PROTECTED_ABBRS = [r"\bdr\.", r"\bmr\.", r"\bmrs\.", r"\bms\.", r"\bprof\.", r"\binc\.", r"\bcorp\.", r"\bltd\.", r"\bco\.", r"\bjr\.", r"\bsr\.", r"\bvs\.", r"\be\.g\.", r"\bi\.e\."]
+        masked_text = text
+        for abbr_pattern in _PROTECTED_ABBRS:
+            masked_text = re.sub(abbr_pattern, lambda m: m.group(0)[:-1] + "\x00", masked_text, flags=re.IGNORECASE)
+
         spans: List[Tuple[str, int, int]] = []
-        matches = list(_SPLIT_REGEX.finditer(text))
+        matches = list(_SPLIT_REGEX.finditer(masked_text))
         
         last_idx = 0
         for match in matches:
-            sentence = text[last_idx:match.start()].strip()
-            if sentence:
-                # Find exact character indices in the slice
-                s_start = text.find(sentence, last_idx)
-                s_end = s_start + len(sentence)
-                spans.append((sentence, s_start, s_end))
+            s_candidate = masked_text[last_idx:match.start()].replace("\x00", ".").strip()
+            if s_candidate:
+                s_start = text.find(s_candidate, last_idx)
+                s_end = s_start + len(s_candidate)
+                spans.append((s_candidate, s_start, s_end))
             last_idx = match.end()
 
         if last_idx < len(text):
-            trailing = text[last_idx:].strip()
+            trailing = masked_text[last_idx:].replace("\x00", ".").strip()
             if trailing:
                 s_start = text.find(trailing, last_idx)
                 s_end = s_start + len(trailing)

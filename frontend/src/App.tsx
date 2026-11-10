@@ -6,6 +6,7 @@ import { EpoClaimLogo } from "./components/EpoClaimLogo";
 import { LandingHero } from "./components/LandingHero";
 import { AnalyzerWorkspace } from "./components/AnalyzerWorkspace";
 import { BenchmarkSuiteView } from "./components/BenchmarkSuiteView";
+import { DeveloperHubView } from "./components/DeveloperHubView";
 
 const PRESET_SCENARIOS = [
   {
@@ -34,12 +35,13 @@ const PRESET_SCENARIOS = [
   },
 ];
 
-type AppRoute = "landing" | "analyzer" | "benchmark";
+type AppRoute = "landing" | "analyzer" | "benchmark" | "developers";
 
 function getRouteFromPath(pathname: string): AppRoute {
   const clean = pathname.toLowerCase().replace(/\/+$/, "");
   if (clean === "/analyzer") return "analyzer";
   if (clean === "/benchmark") return "benchmark";
+  if (clean === "/developers" || clean === "/developer") return "developers";
   return "landing";
 }
 
@@ -115,6 +117,15 @@ export function App() {
 
     // Sensible polling interval (every 30 seconds) to detect engine availability changes
     const interval = setInterval(performHealthCheck, 30000);
+
+    // Initial check for cached benchmark to populate active evaluation session
+    fetch("/cached_benchmark.json")
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (data && isMounted) setBenchmarkResult(data);
+      })
+      .catch(() => {});
+
     return () => {
       isMounted = false;
       clearInterval(interval);
@@ -145,11 +156,11 @@ export function App() {
     }
   };
 
-  const handleRunBenchmark = async () => {
+  const handleRunBenchmark = async (scenarioCount: number = 5) => {
     setBenchmarking(true);
     setBenchError(null);
     try {
-      const res = await runBenchmark(5);
+      const res = await runBenchmark(scenarioCount);
       setBenchmarkResult(res);
     } catch (err: any) {
       setBenchError(err.message || "Failed to run benchmark");
@@ -159,12 +170,12 @@ export function App() {
   };
 
   return (
-    <div className="epoclaim-app">
+    <div className={`epoclaim-app ${currentRoute === "developers" ? "route-developers" : `route-${currentRoute}`}`}>
       {/* Velvet / Heavy Satin Textile Background with Directional Fold Sheen */}
       <VelvetFabricBackground />
 
       <div className="app-foreground-layout">
-        {/* PART 1: Redesigned Header with Prominent Custom Logo */}
+        {/* Consistent Global Glass Header across all routes */}
         <header className="global-header">
           <div
             className="header-brand-container"
@@ -175,7 +186,7 @@ export function App() {
             <EpoClaimLogo size={58} showWordmark={true} />
           </div>
 
-          {/* Centered Glass Navigation */}
+          {/* Centered Glass Capsule Navigation */}
           <nav className="glass-nav-pill">
             <button
               className={`nav-link ${currentRoute === "landing" ? "active" : ""}`}
@@ -195,11 +206,17 @@ export function App() {
             >
               Benchmark Suite
             </button>
+            <button
+              className={`nav-link ${currentRoute === "developers" ? "active" : ""}`}
+              onClick={() => navigateTo("developers")}
+            >
+              Developers
+            </button>
             <a
               href="https://github.com/Souvik-Dey-2029/EpoClaim"
               target="_blank"
               rel="noreferrer"
-              className="nav-link"
+              className="nav-link nav-link-external"
             >
               Documentation ↗
             </a>
@@ -276,6 +293,10 @@ export function App() {
               benchError={benchError}
               onRunBenchmark={handleRunBenchmark}
             />
+          )}
+
+          {currentRoute === "developers" && (
+            <DeveloperHubView />
           )}
         </main>
       </div>

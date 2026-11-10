@@ -144,7 +144,74 @@ class GeneralSemanticVerifier:
                 if len(shared - c_cat) >= 2:
                     return 0.04, 0.92, 0.04
 
-        # 4. Check for state transition / supersedence / defeat
+        # 4. Check for state transition / supersedence / defeat / succession
+        #
+        # A. Person-Succession Relationship Verification:
+        # If the claim asserts that Person X succeeded/replaced Person Y, verify:
+        # 1. Exact directional succession (who succeeded whom)
+        # 2. Both successor and predecessor identity match (honorifics stripped, multi-word names matched)
+        # 3. Non-succession contexts (co-working, merely co-mentioned) remain Neutral
+        # 4. Competing organizations conflict and remain Neutral
+        c_succ_m = re.search(
+            r"\b(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\s+"
+            r"(?:succeeded|replaced|took\s+over\s+from)\s+"
+            r"(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)"
+            r"(?:\s+at\s+([A-Za-z0-9\s]+?))?(?:\.|$)",
+            claim_text,
+            re.IGNORECASE
+        )
+        if c_succ_m:
+            c_successor_tokens = set(c_succ_m.group(1).lower().split())
+            c_predecessor_tokens = set(c_succ_m.group(2).lower().split())
+            c_org_scope = c_succ_m.group(3).strip().lower() if c_succ_m.group(3) else None
+
+            # Organization compatibility check
+            if c_org_scope:
+                e_org_m = re.search(r"\b(?:at|of|for)\s+([A-Za-z0-9\s]+?)(?:\.|\,|$)", evidence_text)
+                if e_org_m:
+                    e_org = e_org_m.group(1).strip().lower()
+                    if c_org_scope not in e_org and e_org not in c_org_scope:
+                        return 0.15, 0.15, 0.70
+
+            # Directional succession pattern matching in evidence
+            e_succ_active = re.search(
+                r"\b(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([a-z]+(?:\s+[a-z]+)?)\s+(?:has\s+been\s+appointed|was\s+appointed|appointed|named|became)\s+[a-z\s]+?,\s+replacing\s+(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([a-z]+(?:\s+[a-z]+)?)",
+                e_norm
+            )
+            e_succ_direct = re.search(
+                r"\b(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([a-z]+(?:\s+[a-z]+)?)\s+(?:succeeded|replaced|took\s+over\s+from)\s+(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([a-z]+(?:\s+[a-z]+)?)",
+                e_norm
+            )
+            e_succ_passive = re.search(
+                r"\b(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([a-z]+(?:\s+[a-z]+)?)\s+(?:was\s+succeeded\s+by|was\s+replaced\s+by|replaced\s+by)\s+(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?([a-z]+(?:\s+[a-z]+)?)",
+                e_norm
+            )
+
+            e_succ_cand = None
+            if e_succ_active:
+                e_succ_cand = (set(e_succ_active.group(1).split()), set(e_succ_active.group(2).split()))
+            elif e_succ_direct:
+                e_succ_cand = (set(e_succ_direct.group(1).split()), set(e_succ_direct.group(2).split()))
+            elif e_succ_passive:
+                # In passive ("Y was replaced by X"), group(2) is successor, group(1) is predecessor
+                e_succ_cand = (set(e_succ_passive.group(2).split()), set(e_succ_passive.group(1).split()))
+
+            if e_succ_cand:
+                e_successor, e_predecessor = e_succ_cand
+                if c_successor_tokens == e_successor and c_predecessor_tokens == e_predecessor:
+                    return 0.90, 0.05, 0.05  # Strongly Supported
+                if c_successor_tokens == e_predecessor and c_predecessor_tokens == e_successor:
+                    return 0.05, 0.90, 0.05  # Directionally Contradicted
+                # Distinct individuals or partial matches -> Neutral
+                return 0.15, 0.15, 0.70
+
+            # Co-working or non-succession relationships (e.g. worked together)
+            if any(term in e_norm for term in ["worked together", "alongside", "collaborated", "co-workers", "co-researchers"]):
+                return 0.15, 0.15, 0.70
+
+            # Mentioned in unrelated contexts without directional succession
+            return 0.15, 0.15, 0.70
+
         if has_state_change:
             # Check if evidence asserts a party defeated another to become champion
             champ_match = re.search(r"\b([a-z0-9\s]+?)\s+(?:defeated|beat)\s+(?:[a-z0-9\s]+?)\s+(?:in\s+[a-z0-9\s]+?\s+)?to\s+become\s+champions?\b", e_norm)
@@ -165,7 +232,9 @@ class GeneralSemanticVerifier:
                         return 0.04, 0.92, 0.04
 
                 # Replaced pattern: "[other] replacing [claim_entity]" or "[claim_entity] replaced by [other]"
-                if re.search(rf"\breplacing\s+{re.escape(c_ent_lower)}\b", e_norm) or re.search(rf"\b{re.escape(c_ent_lower)}\s+(?:was\s+)?replaced\s+by\b", e_norm):
+                # Handle possible honorifics (e.g. Dr., Mr., Ms., Prof.) before the name
+                honorific_prefix = r"(?:(?:dr|mr|mrs|ms|prof)\.?\s+)?"
+                if re.search(rf"\breplacing\s+{honorific_prefix}{re.escape(c_ent_lower)}\b", e_norm) or re.search(rf"\b{honorific_prefix}{re.escape(c_ent_lower)}\s+(?:was\s+)?replaced\s+by\b", e_norm):
                     return 0.04, 0.92, 0.04
 
             # If evidence asserts someone else returned as / became the exclusive title holder
@@ -192,15 +261,99 @@ class GeneralSemanticVerifier:
             if not is_substring:
                 return 0.05, 0.85, 0.10
 
-        # 6. Check for distinct grammatical subject head mismatch (e.g. Alice vs Bob)
-        # If the asserted subject entity does not appear anywhere in evidence, high overlap
-        # on context alone (e.g. "researcher at Stanford") must not trigger entailment.
-        m_c = re.match(r"^(?:the\s+)?([A-Z][a-z]+(?:\s+[A-Z][a-z]+)?)\b", claim_text.strip(), re.IGNORECASE)
-        if m_c:
-            c_head = m_c.group(1).lower()
-            if c_head not in e_norm and not is_substring:
-                # Evidence is discussing a different subject entity! Return Neutral
+        # 6. Check for distinct grammatical subject head mismatch (e.g. Alice vs Bob, Mistral vs Acme)
+        # If the asserted subject entity does not appear in evidence, high overlap
+        # on context alone (e.g. "lead researcher", "announced in Paris") must not trigger entailment.
+        #
+        # A. Grammatical leading subject clash check:
+        # If both claim and evidence start with different singular person names (e.g., Alice vs Bob),
+        # they are asserting properties of different individuals.
+        # Ensure we only check when the leading word is an actual proper name (Titlecased word not a common stopword/conjunction).
+        lead_stopwords = {"and", "but", "or", "so", "yet", "for", "in", "on", "at", "by", "with", "from", "as", "if", "that", "this"}
+        c_lead_m = re.match(r"^(?:(?:the|dr|mr|mrs|ms|prof)\.?\s+)?([A-Z][a-z]+)\b", claim_text.strip())
+        e_lead_m = re.match(r"^(?:(?:the|dr|mr|mrs|ms|prof)\.?\s+)?([A-Z][a-z]+)\b", evidence_text.strip())
+        if c_lead_m and e_lead_m:
+            c_lead_name = c_lead_m.group(1).lower()
+            e_lead_name = e_lead_m.group(1).lower()
+            if c_lead_name not in lead_stopwords and e_lead_name not in lead_stopwords:
+                # Also ensure neither is an organization/entity token shared in context
+                if c_lead_name != e_lead_name and c_lead_name not in e_tokens and not is_substring:
+                    return 0.15, 0.15, 0.70
+
+        # B. Determine candidate subject/entity tokens
+        subj_phrase = claim_entity.strip() if claim_entity else ""
+        if not subj_phrase:
+            cleaned_lead = re.sub(r"^(?:dr|mr|mrs|ms|prof)\.?\s+", "", claim_text.strip(), flags=re.IGNORECASE)
+            m_lead = re.match(r"^(?:the\s+)?([A-Z0-9][a-zA-Z0-9\.\'\-]+(?:\s+[A-Z0-9][a-zA-Z0-9\.\'\-]+)?)\b", cleaned_lead)
+            subj_phrase = m_lead.group(1) if m_lead else claim_text.strip().split()[0]
+
+        honorifics = {"dr", "mr", "mrs", "ms", "prof"}
+        c_subj_tokens = [
+            t for t in _clean_tokens(subj_phrase)
+            if t not in honorifics and re.search(r"[a-z]", t) and not t.replace(".", "").isdigit()
+        ]
+
+        # Distinguish person entities (honorific present or two standard Titlecase words like First Last)
+        is_person = bool(re.search(r"\b(?:dr|mr|mrs|ms|prof)\.?\b", claim_text, re.IGNORECASE))
+        if not is_person and len(c_subj_tokens) == 2:
+            words = subj_phrase.split()
+            if len(words) == 2 and all(re.match(r"^[A-Z][a-z]+$", w) for w in words):
+                is_person = True
+
+        if c_subj_tokens:
+            if is_person and len(c_subj_tokens) >= 2:
+                # For multi-word person names, both components must be present in evidence
+                # to prevent conflating different individuals (e.g. Alice Smith vs Alice Johnson).
+                entity_aligned = all(t in e_tokens for t in c_subj_tokens)
+            else:
+                # For organizational / model / brand entities (e.g. "OpenAI's GPT-4.1" vs "GPT-4.1"),
+                # distinctive non-numeric tokens must intersect.
+                entity_aligned = bool(set(c_subj_tokens).intersection(e_tokens))
+
+            # If the entity was an organization/context (e.g. "Nova Dynamics") but the claim's actual
+            # grammatical subject/names (e.g. "Dr. Bob Jones") are present in evidence, treat as aligned.
+            # Only apply this when the claim's subject entity wasn't already a specific person (is_person is False).
+            if not entity_aligned and not is_person:
+                # Find titlecased person names in claim text (e.g. Bob Jones)
+                claim_titlecased_words = re.findall(r"\b[A-Z][a-z]+\b", claim_text)
+                person_candidate_tokens = [
+                    w.lower() for w in claim_titlecased_words
+                    if w.lower() not in honorifics and w.lower() not in lead_stopwords and len(w) > 2
+                ]
+                if person_candidate_tokens:
+                    # If we found person tokens in claim, require that at least 2 match evidence
+                    person_overlap = set(person_candidate_tokens).intersection(e_tokens)
+                    if len(person_overlap) >= 2:
+                        entity_aligned = True
+
+            if not entity_aligned and not is_substring:
+                # Evidence is discussing a completely different subject entity! Return Neutral
                 return 0.15, 0.15, 0.70
+
+            # Check for competing organization/brand modifier clash on identical model identifier
+            # e.g., "Meta Llama 3" vs "Amazon Llama 3"
+            c_words = [w.strip(".,;'") for w in subj_phrase.split() if w.strip(".,;'")]
+            e_words = [w.strip(".,;'") for w in evidence_text.strip().split() if w.strip(".,;'")]
+            if len(c_words) >= 2 and len(e_words) >= 2:
+                if c_words[1].lower() == e_words[1].lower() and c_words[0].lower() != e_words[0].lower():
+                    c_clean_prefix = _clean_tokens(c_words[0].lower())
+                    e_clean_prefix = _clean_tokens(e_words[0].lower())
+                    if c_clean_prefix and e_clean_prefix and not c_clean_prefix.intersection(e_clean_prefix):
+                        # Explicit competing prefix entity clash
+                        return 0.15, 0.15, 0.70
+
+        # C. Check that predicate/value content is corroborated if subject overlap is the only commonality
+        # Having only person/subject overlap while the asserted predicate/relationship is completely absent
+        # must remain NEUTRAL rather than producing false entailment.
+        ent_token_set = set(c_subj_tokens) | honorifics
+        pred_val_tokens = c_tokens - ent_token_set
+        # Content tokens: include words > 2 chars, or temporal/numeric anchor tokens (e.g. years '1215')
+        pred_val_content_tokens = {
+            t for t in pred_val_tokens
+            if (not t.replace(".", "").isdigit() and len(t) > 2) or (t.isdigit() and len(t) == 4)
+        }
+        if pred_val_content_tokens and not pred_val_content_tokens.intersection(e_tokens) and not is_substring:
+            return 0.15, 0.15, 0.70
 
         # 7. Direct entailment / semantic support
         # High token overlap with matching polarity and no version/subject conflict, OR exact substring
