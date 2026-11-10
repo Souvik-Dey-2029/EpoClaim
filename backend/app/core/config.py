@@ -15,6 +15,16 @@ class Settings(BaseSettings):
     # Server & Security
     host: str = "127.0.0.1"
     port: int = 8000
+    api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("EPOCLAIM_API_KEY", "API_KEY"),
+        description="Optional global developer API key for EpoClaim endpoints. When set, requests must pass X-API-Key or Bearer token."
+    )
+    admin_api_key: str = Field(
+        default="",
+        validation_alias=AliasChoices("EPOCLAIM_ADMIN_API_KEY", "ADMIN_API_KEY"),
+        description="Optional administrative key for restricted operations (e.g. manual budget adjustment)."
+    )
     max_body_bytes: int = 2_097_152  # 2MB
     max_text_chars: int = 100_000
     cors_origins: List[str] = [

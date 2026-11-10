@@ -311,9 +311,11 @@ export function VelvetFabricBackground() {
             const distNorm = Math.abs(dy) / Math.max(0.05, spread);
             const ribbon = Math.exp(-distNorm * distNorm * 2.3);
 
-            // Ambient background emission fill
-            const topGlow = Math.max(0, 0.38 - ny * 0.42) * (0.35 + 0.65 * nx);
-            let baseLight = ribbon * (0.82 + 0.36 * Math.sin(nx * 2.8 + 0.5)) + topGlow * 0.4;
+            // Ambient background emission fill with continuous peripheral deep-forest radiance
+            // Gently softens dead near-black patches in upper-left and lower-right
+            const topGlow = Math.max(0, 0.44 - ny * 0.46) * (0.42 + 0.58 * nx);
+            const ambientCornerFill = 0.045 + 0.035 * Math.sin(nx * 2.5 + 0.4) * Math.cos(ny * 2.2);
+            let baseLight = ribbon * (0.84 + 0.36 * Math.sin(nx * 2.8 + 0.5)) + topGlow * 0.42 + ambientCornerFill;
 
             // Intense luminous crest at upper-right peak (nx ~ 0.68 - 0.82, ny ~ 0.10 - 0.40)
             const peakDist = Math.hypot((nx - 0.74) * 1.35, (ny - 0.22) * 1.85);
@@ -323,51 +325,112 @@ export function VelvetFabricBackground() {
             }
 
             // Shadow chasm void beneath the peak (nx ~ 0.70 - 0.86, ny ~ 0.60 - 0.95)
+            // Softened floor threshold so lower-right maintains subtle atmospheric presence without dead black void
             const chasmDist = Math.hypot((nx - 0.75) * 1.25, (ny - 0.78) * 1.55);
             if (chasmDist < 0.58) {
               const chasmCut = Math.cos((chasmDist / 0.58) * Math.PI * 0.5) ** 2;
-              baseLight *= Math.max(0.02, 1.0 - chasmCut * 0.95);
+              baseLight *= Math.max(0.08, 1.0 - chasmCut * 0.86);
             }
 
             // Bottom perimeter darkness
+            // Softened floor threshold so lower regions preserve depth while keeping fabric sheen alive
             if (ny > 0.68) {
               const botFade = (ny - 0.68) / 0.32;
-              baseLight *= Math.max(0.04, 1.0 - botFade * 0.82);
+              baseLight *= Math.max(0.10, 1.0 - botFade * 0.72);
             }
 
             // Fluted vertical modulation
             let totalLight = baseLight * (0.36 + 0.64 * fluteVal) + brushSheen;
 
-            // Color Palette mapping (Reference Image Match):
-            // Base shadow: #020905 (rgb 2, 9, 5)
-            // Low forest:  #082617 (rgb 8, 38, 23)
-            // Mid emerald: #15663a (rgb 21, 102, 58)
-            // High emerald: #27a85f (rgb 39, 168, 95)
-            // Crest peak:  #3de082 (rgb 61, 224, 130)
+            // Color Palette mapping (Target Chromatic Aurora Palette):
+            // Forest Shadow: #020905 -> rgb(  2,   9,   5)
+            // Deep Forest:   #05180F -> rgb(  5,  24,  15)
+            // Mid Emerald:   #15663A -> rgb( 21, 102,  58)
+            // Emerald:       #25AB64 -> rgb( 37, 171, 100) (dominant luminous wave)
+            // Radiant Green: #34CE78 -> rgb( 52, 206, 120) (bright wave crests)
+            //
+            // Chromatic Nuances (Noticeable, naturally blended atmospheric shifts):
+            // - Sea Glass (Turquoise): #56C7B2 -> rgb( 86, 199, 178)
+            // - Mist Blue:             #A8B9D9 -> rgb(168, 185, 217)
+            // - Lavender:              #B99ACB -> rgb(185, 154, 203)
+            // - Dusty Rose:            #D99B91 -> rgb(217, 155, 145)
+            // - Champagne:             #E8D9B9 -> rgb(232, 217, 185)
             let crR = 2;
             let crG = 9;
             let crB = 5;
 
-            if (totalLight <= 0.28) {
-              const t = Math.max(0, totalLight / 0.28);
-              crR = 2 * (1 - t) + 8 * t;
-              crG = 9 * (1 - t) + 38 * t;
-              crB = 5 * (1 - t) + 23 * t;
-            } else if (totalLight <= 0.65) {
-              const t = (totalLight - 0.28) / (0.65 - 0.28);
-              crR = 8 * (1 - t) + 21 * t;
-              crG = 38 * (1 - t) + 102 * t;
-              crB = 23 * (1 - t) + 58 * t;
-            } else if (totalLight <= 1.0) {
-              const t = (totalLight - 0.65) / (1.0 - 0.65);
-              crR = 21 * (1 - t) + 39 * t;
-              crG = 102 * (1 - t) + 168 * t;
-              crB = 58 * (1 - t) + 95 * t;
+            if (totalLight <= 0.26) {
+              // Deep shadow regions: transition smoothly from Forest Shadow to Deep Forest
+              // with subtle emerald/mist trace so corners never drop into lifeless pitch black
+              const t = Math.max(0, totalLight / 0.26);
+              crR = 3 * (1 - t) + 6 * t;
+              crG = 12 * (1 - t) + 28 * t;
+              crB = 7 * (1 - t) + 18 * t;
+            } else if (totalLight <= 0.62) {
+              // Low-mid wave body: Deep Forest to Mid Emerald, with clearly perceptible Sea Glass (turquoise) in wave transitions
+              const t = (totalLight - 0.26) / (0.62 - 0.26);
+              let targetR = 6 * (1 - t) + 21 * t;
+              let targetG = 28 * (1 - t) + 102 * t;
+              let targetB = 18 * (1 - t) + 58 * t;
+
+              // Distinct, visible turquoise (Sea Glass) in selected wave transitions
+              const turquoiseZone = Math.max(0, Math.sin(nx * 3.8 + ny * 2.3 - 0.3));
+              const seaGlassBlend = t * 0.28 * (turquoiseZone ** 1.6);
+              targetR = targetR * (1 - seaGlassBlend) + 86 * seaGlassBlend;
+              targetG = targetG * (1 - seaGlassBlend) + 199 * seaGlassBlend;
+              targetB = targetB * (1 - seaGlassBlend) + 178 * seaGlassBlend;
+
+              crR = targetR;
+              crG = targetG;
+              crB = targetB;
+            } else if (totalLight <= 0.96) {
+              // Mid-high emerald wave: Mid Emerald to Emerald (#25AB64)
+              const t = (totalLight - 0.62) / (0.96 - 0.62);
+              let targetR = 21 * (1 - t) + 37 * t;
+              let targetG = 102 * (1 - t) + 171 * t;
+              let targetB = 58 * (1 - t) + 100 * t;
+
+              // Noticeable mist-blue atmospheric highlights in upper glow regions
+              const mistZone = Math.max(0, Math.sin(nx * 3.4 - ny * 2.8 + 0.7));
+              const mistBlend = t * 0.18 * (mistZone ** 1.8);
+              targetR = targetR * (1 - mistBlend) + 168 * mistBlend;
+              targetG = targetG * (1 - mistBlend) + 185 * mistBlend;
+              targetB = targetB * (1 - mistBlend) + 217 * mistBlend;
+
+              // Clearly perceptible lavender reflections in the secondary inflection & crest edges
+              const lavenderZone = Math.max(0, Math.sin(nx * 5.2 + ny * 1.9 - 1.0));
+              const lavenderBlend = t * 0.16 * (lavenderZone ** 1.9);
+              targetR = targetR * (1 - lavenderBlend) + 185 * lavenderBlend;
+              targetG = targetG * (1 - lavenderBlend) + 154 * lavenderBlend;
+              targetB = targetB * (1 - lavenderBlend) + 203 * lavenderBlend;
+
+              crR = targetR;
+              crG = targetG;
+              crB = targetB;
             } else {
-              const t = Math.min(1.0, (totalLight - 1.0) / 0.45);
-              crR = 39 * (1 - t) + 65 * t;
-              crG = 168 * (1 - t) + 224 * t;
-              crB = 95 * (1 - t) + 135 * t;
+              // Peak crest luminous highlights: Emerald to Radiant Green (#34CE78), with warm champagne and dusty-rose accents
+              const t = Math.min(1.0, (totalLight - 0.96) / 0.48);
+              let targetR = 37 * (1 - t) + 52 * t;
+              let targetG = 171 * (1 - t) + 206 * t;
+              let targetB = 100 * (1 - t) + 120 * t;
+
+              // Noticeable warm champagne illumination across the highest luminosity crest
+              const champagneZone = Math.max(0, Math.cos((nx - 0.74) * 3.6));
+              const champagneBlend = t * 0.22 * (champagneZone ** 1.8);
+              targetR = targetR * (1 - champagneBlend) + 232 * champagneBlend;
+              targetG = targetG * (1 - champagneBlend) + 217 * champagneBlend;
+              targetB = targetB * (1 - champagneBlend) + 185 * champagneBlend;
+
+              // Restrained, visible warm dusty-rose reflections along crest perimeter grazing angles
+              const roseZone = Math.max(0, Math.sin(nx * 5.8 - ny * 3.9 + 0.4));
+              const roseBlend = t * 0.14 * (roseZone ** 2.2);
+              targetR = targetR * (1 - roseBlend) + 217 * roseBlend;
+              targetG = targetG * (1 - roseBlend) + 155 * roseBlend;
+              targetB = targetB * (1 - roseBlend) + 145 * roseBlend;
+
+              crR = targetR;
+              crG = targetG;
+              crB = targetB;
             }
 
             const rb = Math.min(255, Math.max(0, crR | 0));
