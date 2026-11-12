@@ -1,0 +1,687 @@
+/* ==========================================================================
+   EpoClaim — Benchmark Suite Empirical Visualizations Styles
+   Ultra-Cohesive Glassmorphism Editorial Scientific Platform
+   ========================================================================== */
+
+/* ─────────────────────────────────────────────────────────────
+   Container Section
+   ───────────────────────────────────────────────────────────── */
+.bench-visualizations-section {
+  display: flex;
+  flex-direction: column;
+  gap: 1.75rem;
+  width: 100%;
+}
+
+.bench-viz-grid-two-column {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.5rem;
+  width: 100%;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Cohesive Glassmorphism Card Architecture
+   Pure frosted dark emerald glass; background weaves through cleanly
+   ───────────────────────────────────────────────────────────── */
+.bench-viz-card {
+  background: rgba(10, 32, 22, 0.42);
+  backdrop-filter: blur(24px) saturate(160%);
+  -webkit-backdrop-filter: blur(24px) saturate(160%);
+  border: 1px solid rgba(92, 219, 149, 0.16);
+  border-radius: 16px;
+  padding: 1.75rem;
+  box-shadow: 
+    0 20px 48px -10px rgba(0, 0, 0, 0.45),
+    0 0 24px rgba(34, 197, 94, 0.05),
+    inset 0 1px 1px rgba(255, 255, 255, 0.14),
+    inset 0 0 20px rgba(92, 219, 149, 0.03);
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  overflow: hidden;
+  position: relative;
+  transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bench-viz-card:hover {
+  background: rgba(12, 38, 26, 0.52);
+  border-color: rgba(92, 219, 149, 0.32);
+  box-shadow: 
+    0 24px 56px -8px rgba(0, 0, 0, 0.55),
+    0 0 32px rgba(34, 197, 94, 0.12),
+    inset 0 1px 1px rgba(255, 255, 255, 0.22),
+    inset 0 0 25px rgba(92, 219, 149, 0.06);
+  transform: translateY(-2px);
+}
+
+/* Subtle Glass Card Top Light Reflection */
+.bench-viz-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 10%;
+  right: 10%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.25), transparent);
+  pointer-events: none;
+}
+
+/* Card Titles */
+.matrix-title-row,
+.dist-title-row,
+.modality-title-row,
+.acc-title-row,
+.ci-title-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  padding-bottom: 0.85rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.matrix-heading {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+}
+
+.matrix-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #5cdb95;
+  box-shadow: 0 0 10px rgba(92, 219, 149, 0.9);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   1. Confusion Matrix Component
+   ───────────────────────────────────────────────────────────── */
+.confusion-matrix-component {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.matrix-scroll-wrapper {
+  overflow-x: auto;
+  width: 100%;
+  padding-bottom: 6px;
+}
+
+.matrix-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 5px;
+  text-align: center;
+  table-layout: fixed;
+}
+
+.matrix-corner {
+  text-align: left;
+  padding: 0.6rem 0.6rem;
+  width: 145px;
+  min-width: 135px;
+  white-space: nowrap;
+}
+
+.matrix-col-header {
+  padding: 0.5rem 0.2rem;
+  text-align: center;
+  color: #94a3b8;
+  vertical-align: bottom;
+}
+
+.matrix-col-label {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+  min-height: 32px;
+  justify-content: flex-end;
+}
+
+.col-verdict-code {
+  font-weight: 700;
+  color: #e2e8f0;
+  letter-spacing: 0.05em;
+  font-size: 11px;
+}
+
+.col-verdict-full {
+  font-size: 9px;
+  color: #718096;
+  max-width: 65px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  line-height: 1.1;
+}
+
+.matrix-total-header {
+  padding: 0.5rem 0.5rem;
+  width: 55px;
+  text-align: right;
+  vertical-align: bottom;
+}
+
+.matrix-row-header {
+  text-align: left;
+  padding: 0.4rem 0.6rem;
+  white-space: nowrap;
+  color: #cbd5e1;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  height: 44px;
+}
+
+.row-verdict-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.row-verdict-name {
+  font-size: 11px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.matrix-cell {
+  height: 44px;
+  min-width: 44px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  position: relative;
+  user-select: none;
+  backdrop-filter: blur(8px);
+}
+
+.matrix-cell.has-data {
+  cursor: pointer;
+}
+
+.matrix-cell.has-data:hover {
+  transform: translateY(-2px) scale(1.04);
+  filter: brightness(1.25);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.45);
+  z-index: 2;
+}
+
+.matrix-cell.cell-selected {
+  outline: 2px solid #5cdb95;
+  outline-offset: 2px;
+}
+
+.cell-diag-badge {
+  position: absolute;
+  top: 3px;
+  right: 5px;
+  font-size: 9px;
+  color: #86efac;
+  opacity: 0.85;
+}
+
+.matrix-support-cell {
+  padding: 0.4rem 0.6rem;
+  text-align: right;
+  font-weight: 600;
+  color: #94a3b8;
+}
+
+.matrix-hover-tooltip {
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.95rem;
+  background: rgba(6, 22, 16, 0.85);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(92, 219, 149, 0.35);
+  border-radius: 8px;
+  font-size: 11px;
+  color: #e2e8f0;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+}
+
+.tooltip-indicator {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.tooltip-count {
+  margin-left: auto;
+  color: #5cdb95;
+  font-weight: 700;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   2. Verdict Distribution Horizontal Bar Chart
+   ───────────────────────────────────────────────────────────── */
+.verdict-distribution-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.dist-bars-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  width: 100%;
+}
+
+.dist-bar-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  width: 100%;
+}
+
+.dist-bar-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.dist-label-left {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.dist-swatch {
+  width: 8px;
+  height: 8px;
+  border-radius: 2px;
+  flex-shrink: 0;
+  box-shadow: 0 0 6px currentColor;
+}
+
+.dist-stats {
+  display: flex;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.dist-track {
+  width: 100%;
+  height: 10px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 5px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.dist-fill {
+  height: 100%;
+  border-radius: 5px;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  min-width: 4px;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   3. Stale vs. Fresh Dual-Modality Comparison Chart
+   ───────────────────────────────────────────────────────────── */
+.stale-vs-fresh-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.modality-metrics-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.modality-metric-card {
+  background: rgba(6, 24, 18, 0.48);
+  backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 1.15rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.55rem;
+  box-shadow: inset 0 1px 1px rgba(255, 255, 255, 0.08);
+  transition: border-color 0.2s ease, transform 0.2s ease;
+}
+
+.modality-metric-card:hover {
+  border-color: rgba(92, 219, 149, 0.28);
+  transform: translateY(-1px);
+}
+
+.modality-card-top {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.m-label {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+.m-desc {
+  line-height: 1.4;
+  min-height: 30px;
+}
+
+.m-progress-track {
+  width: 100%;
+  height: 8px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.05);
+  border-radius: 4px;
+  overflow: hidden;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.m-progress-fill {
+  height: 100%;
+  border-radius: 4px;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.m-footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 2px;
+}
+
+.m-status-text {
+  color: #94a3b8;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   4. Exact vs. Policy-Normalized Accuracy Comparison Chart
+   ───────────────────────────────────────────────────────────── */
+.accuracy-comparison-chart {
+  display: flex;
+  flex-direction: column;
+  gap: 1.15rem;
+  width: 100%;
+}
+
+.acc-dual-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+  width: 100%;
+}
+
+.acc-bar-row {
+  display: flex;
+  flex-direction: column;
+  gap: 0.45rem;
+  width: 100%;
+}
+
+.acc-bar-label {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  width: 100%;
+}
+
+.acc-track {
+  width: 100%;
+  height: 14px;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 7px;
+  overflow: hidden;
+  position: relative;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
+}
+
+.acc-fill {
+  height: 100%;
+  border-radius: 7px;
+  transition: width 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.acc-fill.exact {
+  background: linear-gradient(90deg, #10b981 0%, #34d399 100%);
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
+}
+
+.acc-fill.normalized {
+  background: linear-gradient(90deg, #059669 0%, #10b981 100%);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.6);
+}
+
+.acc-note {
+  line-height: 1.4;
+}
+
+.scen14-audit-callout {
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  padding: 0.75rem 0.95rem;
+  background: rgba(217, 119, 69, 0.12);
+  backdrop-filter: blur(12px);
+  border: 1px solid rgba(217, 119, 69, 0.35);
+  border-radius: 10px;
+  font-size: 11px;
+}
+
+.callout-tag {
+  color: #fb923c;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  font-size: 10px;
+}
+
+.callout-text {
+  color: #fed7aa;
+  line-height: 1.45;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   5. Wilson 95% Confidence Interval Forest Plot
+   ───────────────────────────────────────────────────────────── */
+.confidence-interval-plot {
+  display: flex;
+  flex-direction: column;
+  gap: 1.35rem;
+  width: 100%;
+}
+
+.ci-plot-container {
+  display: flex;
+  flex-direction: column;
+  gap: 0.85rem;
+  width: 100%;
+}
+
+.ci-axis-header {
+  display: flex;
+  justify-content: space-between;
+  margin-left: 280px;
+  padding-right: 8px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  padding-bottom: 0.45rem;
+  position: relative;
+}
+
+.ci-forest-rows {
+  display: flex;
+  flex-direction: column;
+  gap: 0.95rem;
+  width: 100%;
+}
+
+.ci-forest-row {
+  display: flex;
+  align-items: center;
+  gap: 1.5rem;
+  width: 100%;
+}
+
+.ci-row-meta {
+  width: 260px;
+  min-width: 260px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.ci-metric-name {
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ci-values {
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.ci-sample {
+  color: #64748b;
+}
+
+.ci-slider-track {
+  flex: 1;
+  height: 28px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  position: relative;
+  display: flex;
+  align-items: center;
+  box-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ci-grid-line {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: rgba(255, 255, 255, 0.08);
+  pointer-events: none;
+}
+
+.ci-interval-bar {
+  position: absolute;
+  height: 8px;
+  background: rgba(52, 211, 153, 0.55);
+  border: 1px solid #34d399;
+  border-radius: 4px;
+  box-shadow: 0 0 12px rgba(52, 211, 153, 0.5);
+}
+
+.ci-point-marker {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  background: #10b981;
+  border: 2px solid #ffffff;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  box-shadow: 0 0 14px rgba(16, 185, 129, 0.95);
+  cursor: pointer;
+  z-index: 2;
+  transition: transform 0.15s ease;
+}
+
+.ci-point-marker:hover {
+  transform: translateX(-50%) scale(1.35);
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Responsive Breakpoints: 1280px, 1024px, 768px, 480px
+   ───────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+  .bench-viz-grid-two-column {
+    grid-template-columns: 1fr;
+    gap: 1.25rem;
+  }
+  .ci-axis-header {
+    margin-left: 210px;
+  }
+  .ci-row-meta {
+    width: 200px;
+    min-width: 200px;
+  }
+}
+
+@media (max-width: 768px) {
+  .modality-metrics-grid {
+    grid-template-columns: 1fr;
+  }
+  .ci-forest-row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 0.5rem;
+  }
+  .ci-row-meta {
+    width: 100%;
+    min-width: 100%;
+  }
+  .ci-slider-track {
+    width: 100%;
+    height: 28px;
+  }
+  .ci-axis-header {
+    margin-left: 0;
+  }
+  .matrix-corner {
+    width: 110px;
+    min-width: 100px;
+  }
+  .matrix-cell {
+    height: 38px;
+    min-width: 38px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .bench-viz-card {
+    padding: 1.15rem 0.95rem;
+  }
+  .matrix-table {
+    min-width: 360px;
+  }
+  .matrix-corner {
+    width: 105px;
+    min-width: 105px;
+  }
+  .matrix-cell {
+    height: 36px;
+    min-width: 36px;
+    font-size: 11px;
+  }
+  .col-verdict-full {
+    display: none;
+  }
+  .col-verdict-code {
+    font-size: 10px;
+    letter-spacing: 0.02em;
+  }
+}

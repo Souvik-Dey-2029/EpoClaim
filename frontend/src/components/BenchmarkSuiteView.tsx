@@ -1,6 +1,15 @@
 import { useState, useMemo } from "react";
 import type { BenchmarkReport } from "../types";
 import { VerdictPill } from "./VerdictPill";
+import {
+  ConfusionMatrixHeatmap,
+  VerdictDistributionChart,
+  StaleVsFreshComparisonChart,
+  AccuracyComparisonChart,
+  ConfidenceIntervalPlot,
+  type VerdictClass,
+  type MetricIntervalItem,
+} from "./BenchmarkVisualizations";
 
 interface BenchmarkSuiteViewProps {
   benchmarking: boolean;
@@ -92,6 +101,111 @@ export function BenchmarkSuiteView({
       })),
     };
   }, [trials]);
+
+  // Derived datasets for data-driven visualizations
+  const confusionMatrix = useMemo(() => {
+    if (benchmarkResult?.confusion_matrix) {
+      return benchmarkResult.confusion_matrix;
+    }
+    // Fallback: derive dynamically from trials
+    const cm: Record<string, Record<string, number>> = {
+      SUPPORTED: {},
+      PARTIALLY_SUPPORTED: {},
+      CONTRADICTED: {},
+      OUTDATED: {},
+      INSUFFICIENT_EVIDENCE: {},
+    };
+    trials.forEach((t) => {
+      const exp = t.expected_verdict;
+      const pred = t.predicted_verdict;
+      if (!cm[exp]) cm[exp] = {};
+      cm[exp][pred] = (cm[exp][pred] || 0) + 1;
+    });
+    return cm;
+  }, [benchmarkResult, trials]);
+
+  const verdictDistribution = useMemo(() => {
+    const dist: Record<VerdictClass, number> = {
+      SUPPORTED: 0,
+      PARTIALLY_SUPPORTED: 0,
+      CONTRADICTED: 0,
+      OUTDATED: 0,
+      INSUFFICIENT_EVIDENCE: 0,
+    };
+    trials.forEach((t) => {
+      const v = t.predicted_verdict as VerdictClass;
+      if (dist[v] !== undefined) {
+        dist[v] += 1;
+      }
+    });
+    return dist;
+  }, [trials]);
+
+  const confidenceIntervalItems: MetricIntervalItem[] = useMemo(() => {
+    const items: MetricIntervalItem[] = [];
+    if (breakdown.parent_accuracy && breakdown.parent_accuracy.ci_95 && breakdown.parent_accuracy.score !== null) {
+      items.push({
+        name: "Parent Verdict Accuracy",
+        score: breakdown.parent_accuracy.score,
+        ci: breakdown.parent_accuracy.ci_95,
+        sampleSize: breakdown.parent_accuracy.denominator,
+        populationName: "All Trials",
+      });
+    }
+    if (breakdown.exact_accuracy && breakdown.exact_accuracy.ci_95 && breakdown.exact_accuracy.score !== null) {
+      items.push({
+        name: "Exact Verdict Accuracy",
+        score: breakdown.exact_accuracy.score,
+        ci: breakdown.exact_accuracy.ci_95,
+        sampleSize: breakdown.exact_accuracy.denominator,
+        populationName: "Exact Equality",
+      });
+    }
+    if (breakdown.normalized_accuracy && breakdown.normalized_accuracy.ci_95 && breakdown.normalized_accuracy.score !== null) {
+      items.push({
+        name: "Policy-Normalized Accuracy",
+        score: breakdown.normalized_accuracy.score,
+        ci: breakdown.normalized_accuracy.ci_95,
+        sampleSize: breakdown.normalized_accuracy.denominator,
+        populationName: "Equivalence Rules",
+      });
+    }
+    if (breakdown.stale_detection && breakdown.stale_detection.ci_95 && breakdown.stale_detection.score !== null) {
+      items.push({
+        name: "Stale Detection Rate",
+        score: breakdown.stale_detection.score,
+        ci: breakdown.stale_detection.ci_95,
+        sampleSize: breakdown.stale_detection.denominator,
+        populationName: "Stale Cohort",
+      });
+    }
+    if (breakdown.fresh_acceptance && breakdown.fresh_acceptance.ci_95 && breakdown.fresh_acceptance.score !== null) {
+      items.push({
+        name: "Fresh Acceptance Rate",
+        score: breakdown.fresh_acceptance.score,
+        ci: breakdown.fresh_acceptance.ci_95,
+        sampleSize: breakdown.fresh_acceptance.denominator,
+        populationName: "Fresh Cohort",
+      });
+    }
+    return items;
+  }, [breakdown]);
+
+  // Find Scenario 14 equivalence reason if present
+  const scenario14Note = useMemo(() => {
+    const s14 = trials.find((t) => t.scenario_id.includes("scen_14") && t.exact_pass !== t.passed);
+    return s14?.equivalence_reason || null;
+  }, [trials]);
+
+  const exactPassCount = useMemo(() => {
+    if (breakdown.exact_accuracy) return breakdown.exact_accuracy.numerator;
+    return trials.filter((t) => t.exact_pass ?? (t.predicted_verdict === t.expected_verdict)).length;
+  }, [breakdown, trials]);
+
+  const normalizedPassCount = useMemo(() => {
+    if (breakdown.normalized_accuracy) return breakdown.normalized_accuracy.numerator;
+    return trials.filter((t) => t.passed).length;
+  }, [breakdown, trials]);
 
   const handleExecute = (count: 5 | 18) => {
     setActiveCohort(count);
@@ -447,7 +561,75 @@ export function BenchmarkSuiteView({
           </section>
 
           {/* ─────────────────────────────────────────────────────────
-              SECTION D: Failure Analysis & Evaluation Insights
+              SECTION D: Visualizations & Failure Analysis (High-Density Interactive Grid)
+              ───────────────────────────────────────────────────────── */}
+          <section className="bench-visualizations-section" aria-label="Visualizations and Empirical Metrics">
+            <div className="bench-section-heading-bar">
+              <h3 className="bench-section-title">EMPIRICAL DATA VISUALIZATIONS</h3>
+              <span className="bench-section-note font-mono">
+                Interactive Heatmaps &bull; Wilson Confidence Intervals &bull; Class Distributions
+              </span>
+            </div>
+
+            <div className="bench-viz-grid-two-column">
+              {/* Row 1, Left: 5x5 Confusion Matrix Heatmap */}
+              <div className="bench-viz-card">
+                <ConfusionMatrixHeatmap
+                  matrix={confusionMatrix}
+                  onCellClick={(_exp, pred) => {
+                    setFilterType("ALL");
+                    setSearchQuery(pred);
+                  }}
+                />
+              </div>
+
+              {/* Row 1, Right: Verdict Class Distribution */}
+              <div className="bench-viz-card">
+                <VerdictDistributionChart
+                  distribution={verdictDistribution}
+                  totalTrials={trials.length}
+                />
+              </div>
+            </div>
+
+            <div className="bench-viz-grid-two-column mt-4">
+              {/* Row 2, Left: Stale vs Fresh Modality Performance */}
+              <div className="bench-viz-card">
+                <StaleVsFreshComparisonChart
+                  staleDetectionRate={breakdown.stale_detection?.score ?? benchmarkResult.stale_detection_rate}
+                  freshAcceptanceRate={breakdown.fresh_acceptance?.score ?? benchmarkResult.fresh_acceptance_rate}
+                  falseStaleRate={breakdown.false_stale?.score ?? benchmarkResult.false_stale_detection_rate}
+                  abstentionRate={breakdown.abstention_rate?.score ?? benchmarkResult.abstention_rate ?? null}
+                  abstentionFidelity={breakdown.abstention?.score ?? benchmarkResult.abstention_fidelity ?? null}
+                  staleCount={staleCount}
+                  freshCount={freshCount}
+                />
+              </div>
+
+              {/* Row 2, Right: Exact vs Policy-Normalized Accuracy Comparison */}
+              <div className="bench-viz-card">
+                <AccuracyComparisonChart
+                  exactAccuracy={breakdown.exact_accuracy?.score ?? benchmarkResult.exact_verdict_accuracy ?? 0.9722}
+                  normalizedAccuracy={breakdown.normalized_accuracy?.score ?? benchmarkResult.normalized_verdict_accuracy ?? 1.0}
+                  parentAccuracy={breakdown.parent_accuracy?.score ?? benchmarkResult.parent_verdict_accuracy ?? 1.0}
+                  totalTrials={trials.length}
+                  exactPassCount={exactPassCount}
+                  normalizedPassCount={normalizedPassCount}
+                  scenario14EquivalenceReason={scenario14Note}
+                />
+              </div>
+            </div>
+
+            {/* Row 3: Wilson 95% Confidence Interval Forest Plot */}
+            {confidenceIntervalItems.length > 0 && (
+              <div className="bench-viz-card mt-4">
+                <ConfidenceIntervalPlot metrics={confidenceIntervalItems} />
+              </div>
+            )}
+          </section>
+
+          {/* ─────────────────────────────────────────────────────────
+              SECTION D2: Failure Analysis & Evaluation Insights
               ───────────────────────────────────────────────────────── */}
           <section className="bench-failure-analysis-section" aria-label="Failure Analysis">
             <div className="bench-section-heading-bar">

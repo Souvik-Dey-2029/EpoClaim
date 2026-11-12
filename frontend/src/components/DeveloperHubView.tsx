@@ -335,7 +335,7 @@ export async function verifyBeforeResponding(draftAnswer: string, userPrompt: st
               <div className="v2-split-technical">
                 <div className="v2-spec-table">
                   <div className="v2-spec-table-head">
-                    <span>Integration Specification</span>
+                    <span>Integration Specification & Provenance</span>
                     <span className="v2-spec-badge">v0.1.0</span>
                   </div>
                   <div className="v2-spec-item">
@@ -348,7 +348,15 @@ export async function verifyBeforeResponding(draftAnswer: string, userPrompt: st
                   </div>
                   <div className="v2-spec-item">
                     <span className="v2-key">Authentication</span>
-                    <span className="v2-val">X-API-Key / Bearer</span>
+                    <span className="v2-val">X-API-Key / Bearer Token</span>
+                  </div>
+                  <div className="v2-spec-item">
+                    <span className="v2-key">NLI Reasoning</span>
+                    <span className="v2-val">GeneralSemanticVerifier / Bifrost LLM</span>
+                  </div>
+                  <div className="v2-spec-item">
+                    <span className="v2-key">Temporal Decay</span>
+                    <span className="v2-val">Strict Half-Life 2^(-a / T)</span>
                   </div>
                   <div className="v2-spec-item">
                     <span className="v2-key">Client Libraries</span>
@@ -360,7 +368,29 @@ export async function verifyBeforeResponding(draftAnswer: string, userPrompt: st
                   </div>
                   <div className="v2-spec-item">
                     <span className="v2-key">Evaluation Harness</span>
-                    <span className="v2-val">POST /api/v1/evaluate</span>
+                    <span className="v2-val">POST /api/v1/evaluate (18 scenarios)</span>
+                  </div>
+                </div>
+
+                {/* Gateway & Provenance Card */}
+                <div className="v2-provenance-status-card font-mono text-[11px] mt-4">
+                  <div className="v2-prov-status-header">
+                    <span className="text-emerald-400 font-bold">INTEGRATION PROVENANCE DISCLOSURE</span>
+                    <span className="text-stone-400">Deterministic Guard</span>
+                  </div>
+                  <div className="v2-prov-status-body">
+                    <div className="v2-prov-row">
+                      <span className="text-stone-400">Offline NLI Matcher:</span>
+                      <span className="text-emerald-300 font-semibold">Active &amp; Deterministic</span>
+                    </div>
+                    <div className="v2-prov-row">
+                      <span className="text-stone-400">Bifrost LLM Gateway:</span>
+                      <span className="text-amber-300 font-semibold">Circuit-Breaker Protected (30s Cooldown)</span>
+                    </div>
+                    <div className="v2-prov-row">
+                      <span className="text-stone-400">Tavily Search:</span>
+                      <span className="text-stone-300 font-semibold">Budget-Ledger Controlled (Offline Fixtures Default)</span>
+                    </div>
                   </div>
                 </div>
               </div>

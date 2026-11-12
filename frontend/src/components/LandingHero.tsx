@@ -1,11 +1,14 @@
 import { TemporalHourglass3D } from "./TemporalHourglass3D";
+import type { BenchmarkReport } from "../types";
 
 export function LandingHero({
   onLaunchAnalyzer,
   onNavigateBenchmark,
+  benchmarkResult,
 }: {
   onLaunchAnalyzer: () => void;
   onNavigateBenchmark: () => void;
+  benchmarkResult?: BenchmarkReport | null;
 }) {
   return (
     <section className="temporal-collision-hero-viewport">
@@ -70,6 +73,55 @@ export function LandingHero({
             </button>
           </div>
         </div>
+
+        {/* Compact, Data-Driven Benchmark Performance Snapshot */}
+        {benchmarkResult && (
+          <div className="hero-benchmark-snapshot-bar animate-mask-reveal delay-5 font-mono">
+            <div className="snapshot-label-col">
+              <span className="snapshot-pulse-dot" />
+              <span className="snapshot-tag">BENCHMARK SNAPSHOT</span>
+              <span className="snapshot-trials text-stone-400">({benchmarkResult.total_trials} Trials &bull; 18 Scenarios)</span>
+            </div>
+
+            <div className="snapshot-metrics-cluster">
+              <div className="snapshot-metric-item">
+                <span className="snapshot-k text-stone-400">NORMALIZED ACCURACY</span>
+                <span className="snapshot-v text-emerald-300 font-bold">
+                  {((benchmarkResult.normalized_verdict_accuracy ?? 1.0) * 100).toFixed(1)}%
+                </span>
+              </div>
+              <span className="snapshot-sep text-stone-600">/</span>
+              <div className="snapshot-metric-item">
+                <span className="snapshot-k text-stone-400">EXACT ACCURACY</span>
+                <span className="snapshot-v text-stone-200 font-bold">
+                  {((benchmarkResult.exact_verdict_accuracy ?? 0.9722) * 100).toFixed(1)}%
+                </span>
+              </div>
+              <span className="snapshot-sep text-stone-600">/</span>
+              <div className="snapshot-metric-item">
+                <span className="snapshot-k text-stone-400">STALE RECALL</span>
+                <span className="snapshot-v text-amber-300 font-bold">
+                  {((benchmarkResult.stale_detection_rate ?? 1.0) * 100).toFixed(1)}%
+                </span>
+              </div>
+              <span className="snapshot-sep text-stone-600">/</span>
+              <div className="snapshot-metric-item">
+                <span className="snapshot-k text-stone-400">FALSE STALE PENALTY</span>
+                <span className="snapshot-v text-emerald-400 font-bold">
+                  {((benchmarkResult.false_stale_detection_rate ?? 0.0) * 100).toFixed(1)}%
+                </span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              className="snapshot-explore-btn text-emerald-400 hover:text-emerald-300"
+              onClick={onNavigateBenchmark}
+            >
+              Audit Details ↗
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ──────────────────────────────────────────────────────────────────────────

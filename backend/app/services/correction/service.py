@@ -239,6 +239,8 @@ class AnswerCorrectionService:
         if provider_error_msg:
             overall_fallback_reasons.append(provider_error_msg)
 
+        unverified_propositions: List[str] = []
+
         # Iterate over each proposition deterministically
         for pid, prop in actionable_props_map.items():
             claim = prop_to_claim[pid]
@@ -342,7 +344,8 @@ class AnswerCorrectionService:
                 )
             else: # INSUFFICIENT / UNVERIFIED
                 unresolved.append(display_text)
-                corrected_sentences.append(f"It remains unverified whether {display_text.lower()} due to insufficient corroborating evidence.")
+                clean_disp = display_text.strip().rstrip(".,;")
+                unverified_propositions.append(clean_disp)
                 deltas.append(
                     CorrectionDelta(
                         claim_id=claim.claim_id,
@@ -352,6 +355,13 @@ class AnswerCorrectionService:
                         explanation="Unverified by available evidence; explicitly qualified to avoid hallucination.",
                     )
                 )
+
+        # Synthesize unresolved propositions cleanly without robotic sentence repetition
+        if len(unverified_propositions) == 1:
+            corrected_sentences.append(f"It remains unverified whether {unverified_propositions[0]} due to insufficient corroborating evidence.")
+        elif len(unverified_propositions) > 1:
+            grouped_items = "; ".join(f"({i+1}) {item}" for i, item in enumerate(unverified_propositions))
+            corrected_sentences.append(f"Due to insufficient corroborating evidence, it remains unverified whether: {grouped_items}.")
 
         full_corrected = " ".join(corrected_sentences).strip()
         if not full_corrected:

@@ -212,6 +212,7 @@ class EpoClaimPipeline:
             metadata,
             scoring_mode=scoring_formula,
             temporal_evaluation_mode=request.temporal_evaluation_mode or "default",
+            candidate_evidence=list(local_evidence) + list(web_evidence),
         )
 
         # 8. Persistence

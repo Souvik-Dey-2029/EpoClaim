@@ -22,9 +22,10 @@ logger = logging.getLogger(__name__)
 # Patterns identifying non-factual conversational or meta sentences
 _DISCOURSE_PATTERNS = [
     re.compile(r"^(sure|certainly|of course|hello|hi|hey|greetings|thank you|thanks)\b", re.IGNORECASE),
-    re.compile(r"^(here is|here are|below is|in summary|as mentioned|to summarize)\b", re.IGNORECASE),
+    re.compile(r"^(here is|here are|below is|below are|in summary|as mentioned|to summarize)\b", re.IGNORECASE),
     re.compile(r"^(i hope this helps|let me know if you need|feel free to ask)\b", re.IGNORECASE),
     re.compile(r"^(in my opinion|i believe|personally|i think)\b", re.IGNORECASE),
+    re.compile(r"\b(here (?:are|is)|below (?:are|is)|following (?:are|is))\s+(?:some|a few|the|several)?\s*(?:important|key|notable)?\s*(?:facts|points|details|updates|information)\b", re.IGNORECASE),
 ]
 
 # Coordinating conjunctions or split points for compound sentences
@@ -196,8 +197,17 @@ class ClaimExtractionService:
 
     def _is_non_factual_filler(self, sentence: str) -> bool:
         """Identify conversational boilerplate, rhetorical questions, and greetings."""
+        # Strip leading temporal or introductory adverbial preambles before testing
+        # e.g. "As of November 2026, here are..." -> "here are..."
+        stripped = re.sub(
+            r"^(?:as of [^,]+|in this (?:article|guide|response|overview)|for your information|please note|note that|below|firstly|first of all),\s*",
+            "",
+            sentence.strip(),
+            flags=re.IGNORECASE,
+        )
+
         for pattern in _DISCOURSE_PATTERNS:
-            if pattern.search(sentence):
+            if pattern.search(sentence) or pattern.search(stripped):
                 return True
         if sentence.endswith("?") and not any(w in sentence.lower() for w in ["who", "what", "where", "when"]):
             return True

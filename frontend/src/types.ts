@@ -258,6 +258,11 @@ export interface BenchmarkReport {
   false_alarm_rate?: number | null;
   parent_verdict_accuracy?: number | null;
   parent_verdict_accuracy_ci_95?: [number, number] | null;
+  exact_verdict_accuracy?: number | null;
+  exact_verdict_accuracy_ci_95?: [number, number] | null;
+  normalized_verdict_accuracy?: number | null;
+  normalized_verdict_accuracy_ci_95?: [number, number] | null;
+  confusion_matrix?: Record<string, Record<string, number>>;
   abstention_rate?: number | null;
   abstention_fidelity?: number | null;
   metrics_breakdown?: Record<string, BenchmarkMetricDetail>;

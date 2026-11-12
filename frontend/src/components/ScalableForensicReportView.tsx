@@ -1,6 +1,7 @@
 import { useState, useId } from "react";
 import type { FinalReport, ClaimAnalysisDetail } from "../types";
 import { VerdictPill } from "./VerdictPill";
+import { EvidenceVisualizer } from "./EvidenceVisualizer";
 
 /**
  * ScalableForensicReportView
@@ -454,6 +455,12 @@ export function ScalableForensicReportView({
                       </div>
                     )}
                   </div>
+
+                  {/* Forensic Evidence Visualizer: Propositions, Scores, Chronological Timeline & Relevance */}
+                  <EvidenceVisualizer
+                    claim={currentClaim}
+                    allEvaluatedEvidence={report.evidence_sources || []}
+                  />
                 </div>
               ) : (
                 <div className="empty-selection-placeholder mono-label">

@@ -96,6 +96,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
         self._timeout = timeout_seconds if timeout_seconds is not None else settings.bifrost_timeout_seconds
         self._max_retries = max_retries if max_retries is not None else settings.bifrost_max_retries
         self._custom_client = http_client
+        self._last_connect_failure_time: float = 0.0
+        self._cooldown_seconds: float = 30.0
 
     @property
     def provider_name(self) -> str:
@@ -105,6 +107,9 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
     def is_available(self) -> bool:
         """Check if provider is configured and available for any semantic reasoning task."""
         if not self._base_url:
+            return False
+        # If gateway experienced connection failure recently, remain in cooldown
+        if self._last_connect_failure_time > 0 and (time.monotonic() - self._last_connect_failure_time) < self._cooldown_seconds:
             return False
         return (
             settings.enable_llm_semantic_assessment
@@ -284,12 +289,14 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                     if not is_valid:
                         raise ValueError(f"Structural validation failed: {reason}")
 
+                    self._last_connect_failure_time = 0.0
                     return ExtractionResponse(
                         propositions=validated,
                         raw_response=raw_text,
                         provider_name=self.provider_name,
                     )
                 except (httpx.TimeoutException, httpx.RequestError) as net_err:
+                    self._last_connect_failure_time = time.monotonic()
                     logger.warning(f"Bifrost decomposition network exception on attempt {attempts}: {net_err.__class__.__name__}")
                     last_error = net_err
                 except Exception as parse_err:
@@ -412,12 +419,14 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         )
                         validated_units.append(unit_obj)
 
+                    self._last_connect_failure_time = 0.0
                     return CorrectionGenerationResponse(
                         correction_units=validated_units,
                         raw_response=raw_text,
                         provider_name=self.provider_name,
                     )
                 except (httpx.TimeoutException, httpx.RequestError) as net_err:
+                    self._last_connect_failure_time = time.monotonic()
                     logger.warning(f"Bifrost correction network exception on attempt {attempts}: {net_err.__class__.__name__}")
                     last_error = net_err
                 except Exception as parse_err:
@@ -485,6 +494,7 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         raw_text, valid_prop_ids, valid_ev_map
                     )
 
+                    self._last_connect_failure_time = 0.0
                     duration_ms = int((time.perf_counter() - start_time) * 1000)
                     return BatchAssessmentResponse(
                         assessments=validated_assessments,
@@ -494,6 +504,7 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         raw_response=raw_text,
                     )
                 except (httpx.TimeoutException, httpx.RequestError) as net_err:
+                    self._last_connect_failure_time = time.monotonic()
                     logger.warning(f"Bifrost network exception on attempt {attempts}: {net_err.__class__.__name__}")
                     last_error = net_err
                 except Exception as parse_err:

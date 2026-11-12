@@ -28,6 +28,7 @@ class ReportingService:
         grounded_correction: Optional[GroundedCorrection] = None,
         scoring_mode: str = "baseline",
         temporal_evaluation_mode: str = "default",
+        candidate_evidence: Optional[List[EvidenceRecord]] = None,
     ) -> FinalReport:
         report_id = f"epo_{uuid.uuid4().hex[:10]}"
         total = len(claim_details)
@@ -56,9 +57,28 @@ class ReportingService:
             else:
                 unverified += 1
 
+        # 1. Collect evidence directly attached as supporting or contradicting
+        for detail in claim_details:
             for ev in detail.supporting_evidence + detail.contradicting_evidence:
                 if ev.evidence_id not in unique_sources:
                     unique_sources[ev.evidence_id] = ev
+
+        # 2. Collect evidence actually evaluated for claims and propositions
+        # (including neutral and insufficient-evidence assessments) without indiscriminately dumping unrelated candidates
+        if candidate_evidence:
+            cand_map = {e.evidence_id: e for e in candidate_evidence}
+            for detail in claim_details:
+                # Claim-level evaluated evidence IDs
+                for eid in detail.verification.evidence_ids:
+                    if eid in cand_map and eid not in unique_sources:
+                        unique_sources[eid] = cand_map[eid]
+
+                # Proposition-level evaluated evidence IDs (supporting, contradicting, neutral)
+                if detail.verification.proposition_results:
+                    for pr in detail.verification.proposition_results:
+                        for eid in pr.supporting_evidence_ids + pr.contradicting_evidence_ids + pr.neutral_evidence_ids:
+                            if eid in cand_map and eid not in unique_sources:
+                                unique_sources[eid] = cand_map[eid]
 
         # Generate evidence-grounded correction if not provided
         correction = grounded_correction or self.correction_service.generate_correction(

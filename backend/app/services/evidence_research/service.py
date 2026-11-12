@@ -1,4 +1,4 @@
-"""Evidence research service with deterministic query construction and source quality estimation.
+r"""Evidence research service with deterministic query construction and source quality estimation.
 
 Enforces:
 - Concise deterministic search queries (< 400 chars).
@@ -152,35 +152,47 @@ class EvidenceResearchService:
 
         seen_queries = set()
 
+        # Plan queries with fair distribution: ensure each time-sensitive claim gets its primary query
+        # before secondary proposition queries are scheduled
+        claim_query_plan: List[Tuple[AtomicClaim, str]] = []
+        secondary_query_plan: List[Tuple[AtomicClaim, str]] = []
+
         for claim in claims:
+            queries = self.generate_proposition_queries(claim)
+            if not queries:
+                continue
+            # First query is primary for this claim
+            claim_query_plan.append((claim, queries[0]))
+            # Remaining queries are secondary
+            for q in queries[1:]:
+                secondary_query_plan.append((claim, q))
+
+        combined_plan = claim_query_plan + secondary_query_plan
+
+        for claim, query in combined_plan:
             if searches_executed >= max_limit:
                 break
+            if not query or query in seen_queries:
+                continue
+            seen_queries.add(query)
 
-            queries = self.generate_proposition_queries(claim)
-            for query in queries:
-                if searches_executed >= max_limit:
-                    break
-                if not query or query in seen_queries:
+            res = await self.tavily.search(query)
+            if res.get("source") == "cache":
+                cache_hits += 1
+            elif res.get("source") == "live":
+                searches_executed += 1
+
+            if res.get("error"):
+                errors.append(res["error"])
+
+            for item in res.get("results", []):
+                url = item.get("url", "")
+                content = item.get("content", "").strip()
+                if not content:
                     continue
-                seen_queries.add(query)
 
-                res = await self.tavily.search(query)
-                if res.get("source") == "cache":
-                    cache_hits += 1
-                elif res.get("source") == "live":
-                    searches_executed += 1
-
-                if res.get("error"):
-                    errors.append(res["error"])
-
-                for item in res.get("results", []):
-                    url = item.get("url", "")
-                    content = item.get("content", "").strip()
-                    if not content:
-                        continue
-
-                    domain = urlparse(url).netloc.replace("www.", "") if url else "web"
-                    pub_date = parse_datetime(item.get("published_date"))
+                domain = urlparse(url).netloc.replace("www.", "") if url else "web"
+                pub_date = parse_datetime(item.get("published_date"))
                 score = float(item.get("score", 0.7))
 
                 quality, factors = estimate_source_quality(url, item.get("title", ""), content, pub_date, score)

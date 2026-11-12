@@ -468,9 +468,10 @@ class ClaimVerificationService:
             except Exception:
                 pass
 
+        ev_text = evidence.verification_context if (evidence.verification_context and len(evidence.verification_context.strip()) > len(evidence.citation_text.strip())) else evidence.citation_text
         return self.semantic_engine.evaluate_pair(
             claim_text=prop_text,
-            evidence_text=evidence.citation_text,
+            evidence_text=ev_text,
             claim_entity=prop.subject,
             claim_attribute=prop.predicate,
             claim_value=prop.object,
@@ -491,9 +492,10 @@ class ClaimVerificationService:
                 pass
 
         # Structured general semantic evaluation
+        ev_text = evidence.verification_context if (evidence.verification_context and len(evidence.verification_context.strip()) > len(evidence.citation_text.strip())) else evidence.citation_text
         return self.semantic_engine.evaluate_pair(
             claim_text=claim.normalized_text,
-            evidence_text=evidence.citation_text,
+            evidence_text=ev_text,
             claim_entity=claim.entity,
             claim_attribute=claim.attribute,
             claim_value=claim.claimed_value,

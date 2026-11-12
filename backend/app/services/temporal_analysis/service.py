@@ -7,27 +7,32 @@ from typing import Optional
 from app.schemas.claims import AtomicClaim, TemporalSensitivity
 from app.core.temporal import utc_now
 
-# Invariant domain cues: historical markers, physics, mathematics, geography
+# Invariant domain cues: historical markers, physics, mathematics, geography, computing definitions
 _INVARIANT_CUES = [
     re.compile(r"\b(born|died|discovered|invented|founded|assassinated|signed|landed|fought)\b", re.IGNORECASE),
     re.compile(r"\b(in|during)\s+(1[5-9][0-9]{2}|200[0-9]|201[0-5])\b", re.IGNORECASE), # dates prior to 2016
     re.compile(r"\b(speed of light|freezing point|boiling point|atomic number|chemical formula|constant)\b", re.IGNORECASE),
     re.compile(r"\b(capital of|mountain|river|continent|planet)\b", re.IGNORECASE),
+    # Computing standards, RFCs, protocols, and fundamental architectural definitions
+    re.compile(r"\b(http status code|status code \d{3}|http \d{3}|rfc\s*\d+|transport protocol|network protocol|communication protocol|tcp/ip|tcp|udp|ip address)\b", re.IGNORECASE),
+    re.compile(r"\b(version control system|vcs|git repository|document-oriented database|nosql database|relational database)\b", re.IGNORECASE),
+    re.compile(r"\b(data structure|binary search|sorting algorithm|time complexity|hash table|bson format|json format)\b", re.IGNORECASE),
 ]
 
 # Fast moving cues: prices, latest releases, versions, active live metrics
 _FAST_MOVING_CUES = [
     re.compile(r"\b(stock price|market cap|trading at|share price|exchange rate)\b", re.IGNORECASE),
-    re.compile(r"\b(latest|current version|newest|released today|just announced|breaking)\b", re.IGNORECASE),
+    re.compile(r"\b(latest|current version|newest|released today|just announced|breaking|active lts)\b", re.IGNORECASE),
     re.compile(r"\b(temperature|weather|forecast|poll numbers)\b", re.IGNORECASE),
     re.compile(r"\b(as of (today|this week|yesterday))\b", re.IGNORECASE),
 ]
 
-# Slow moving cues: leadership, titles, policies, relationships
+# Slow moving cues: leadership, titles, policies, relationships, configurations, recommendations
 _SLOW_MOVING_CUES = [
     re.compile(r"\b(ceo|president|prime minister|head coach|director|mayor|governor)\b", re.IGNORECASE),
     re.compile(r"\b(married to|working at|employed by|member of|subsidiary of)\b", re.IGNORECASE),
     re.compile(r"\b(regulation|law|policy|population of)\b", re.IGNORECASE),
+    re.compile(r"\b(currently recommended|recommended configuration|security configuration|recommended for|best practice)\b", re.IGNORECASE),
 ]
 
 

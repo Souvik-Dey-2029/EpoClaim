@@ -260,6 +260,7 @@ export function App() {
             <LandingHero
               onLaunchAnalyzer={() => navigateTo("analyzer")}
               onNavigateBenchmark={() => navigateTo("benchmark")}
+              benchmarkResult={benchmarkResult}
             />
           )}
 
