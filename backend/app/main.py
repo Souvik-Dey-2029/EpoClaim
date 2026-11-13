@@ -2,9 +2,11 @@
 from __future__ import annotations
 
 import logging
-from fastapi import FastAPI, Request, Response, status
+from pathlib import Path
+from fastapi import FastAPI, HTTPException, Request, Response, status
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import FileResponse, JSONResponse
+from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
 from app.api.v1.endpoints import router as api_v1_router
@@ -64,14 +66,61 @@ async def root_health_check():
     }
 
 
-@app.get("/", tags=["Root"])
-async def root():
-    return {
-        "platform": settings.app_name,
-        "version": settings.app_version,
-        "documentation": "/docs",
-        "api_v1": "/api/v1",
-    }
+# ------------------------------------------------------------------------------
+# Frontend Static Asset & Single-Page Application (SPA) Serving
+# ------------------------------------------------------------------------------
+_root_dir = Path(__file__).resolve().parent.parent.parent
+_frontend_dist = _root_dir / "frontend" / "dist"
+_assets_dir = _frontend_dist / "assets"
+
+if _assets_dir.is_dir():
+    # Mount Vite static assets (JS, CSS, images) with proper MIME types and caching
+    app.mount("/assets", StaticFiles(directory=str(_assets_dir)), name="frontend_assets")
+
+
+@app.get("/{full_path:path}", tags=["Frontend"])
+async def serve_frontend(full_path: str, request: Request):
+    """
+    Serve compiled React frontend assets and SPA routes.
+    - Never intercepts API routes (/api/*), health check (/health), or docs (/docs, /redoc, /openapi.json).
+    - Serves exact matching static assets located in frontend/dist (e.g. favicon.ico, cached_benchmark.json).
+    - Falls back to index.html for client-side HTML5 history navigation.
+    """
+    # Strict API route boundary protection
+    if (
+        full_path.startswith("api/")
+        or full_path == "api"
+        or full_path.startswith("health")
+        or full_path in ("docs", "redoc", "openapi.json")
+    ):
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API route not found")
+
+    # If the root or JSON info is explicitly requested via API headers when dist is not built:
+    index_file = _frontend_dist / "index.html"
+
+    # Serve direct file from frontend/dist if it exists
+    if full_path:
+        target_file = (_frontend_dist / full_path).resolve()
+        # Security: protect against directory traversal
+        if _frontend_dist in target_file.parents or target_file == index_file:
+            if target_file.is_file():
+                return FileResponse(str(target_file))
+
+    # Fallback to index.html for client-side routes (e.g. /, /analyzer, /benchmark, /developers)
+    if index_file.is_file():
+        return FileResponse(str(index_file))
+
+    # Fallback for environments where frontend hasn't been built yet (e.g. headless dev)
+    return JSONResponse(
+        status_code=status.HTTP_200_OK,
+        content={
+            "platform": settings.app_name,
+            "version": settings.app_version,
+            "status": "Frontend not yet built. Run 'npm --prefix frontend run build' or access API at /docs.",
+            "api_v1": "/api/v1",
+            "documentation": "/docs",
+        },
+    )
 
 
 if __name__ == "__main__":

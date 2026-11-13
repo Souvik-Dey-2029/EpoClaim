@@ -1,54 +1,46 @@
 # ==============================================================================
 # EpoClaim — Render Blueprint Specification (render.yaml)
-# Provisions both Backend Web Service and Frontend Static Site in one workflow
+# Single Unified Web Service (FastAPI serves both API and React Frontend)
 # ==============================================================================
 # Docs: https://render.com/docs/blueprint-spec
 # ==============================================================================
 
 version: "1"
 
-# ------------------------------------------------------------------------------
-# Shared Environment Variables Group
-# ------------------------------------------------------------------------------
-envVarGroups:
-  - name: epoclaim-shared-config
+services:
+  # ============================================================================
+  # EpoClaim Integrated Web Service (FastAPI + React SPA)
+  # ============================================================================
+  - type: web
+    name: epoclaim
+    runtime: python
+    plan: free
+    region: oregon
+    # Root directory is the repository root
+    buildCommand: ./build.sh
+    startCommand: python -m uvicorn app.main:app --app-dir backend --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
     envVars:
+      - key: PYTHONPATH
+        value: backend
+      # Runtime host & environment
       - key: ENVIRONMENT
         value: production
       - key: APP_DEBUG
         value: "false"
-
-services:
-  # ============================================================================
-  # 1. Backend Web Service (FastAPI)
-  # ============================================================================
-  - type: web
-    name: epoclaim-backend
-    runtime: python
-    plan: free
-    region: oregon
-    rootDir: backend
-    buildCommand: pip install -r requirements.txt
-    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
-    healthCheckPath: /health
-    autoDeploy: true
-    envVars:
-      # Inherit shared non-secret settings
-      - fromGroup: epoclaim-shared-config
-
-      # Runtime host & port binding
       - key: HOST
         value: 0.0.0.0
       - key: PYTHON_VERSION
         value: 3.11.9
 
       # CORS Origin Configuration:
-      # Specific deployed origin + regex matching Render frontend instances/PR previews.
-      # Wildcard '*' is strictly avoided because allow_credentials=True is enabled.
+      # In unified single-service mode, the frontend is same-origin (relative path).
+      # Localhost origins are preserved for standalone frontend development.
       - key: CORS_ORIGINS
-        value: https://epoclaim-frontend.onrender.com,http://localhost:5173
+        value: http://localhost:5173,http://localhost:3000
       - key: CORS_ORIGIN_REGEX
-        value: "^https://epoclaim-frontend.*\\.onrender\\.com$"
+        value: "^https://.*\\.onrender\\.com$"
 
       # Security & Limits
       - key: MAX_BODY_BYTES
@@ -101,26 +93,3 @@ services:
 
       - key: EPOCLAIM_ADMIN_API_KEY
         sync: false
-
-  # ============================================================================
-  # 2. Frontend Static Site (React + Vite)
-  # ============================================================================
-  - type: web
-    name: epoclaim-frontend
-    runtime: static
-    rootDir: frontend
-    buildCommand: npm ci && npm run build
-    staticPublishPath: dist
-    autoDeploy: true
-    routes:
-      # SPA rewrite rule: route all subpaths to index.html for client-side routing
-      - type: rewrite
-        source: /*
-        destination: /index.html
-    envVars:
-      # Automatically wire backend's dynamic public URL into Vite at build time
-      - key: VITE_API_BASE_URL
-        fromService:
-          type: web
-          name: epoclaim-backend
-          envVarKey: RENDER_EXTERNAL_URL
