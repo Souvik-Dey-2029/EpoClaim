@@ -11,6 +11,7 @@ import json
 import logging
 import time
 import asyncio
+import random
 from typing import Any, Dict, List, Optional, Set
 import httpx
 
@@ -98,6 +99,14 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
         self._custom_client = http_client
         self._last_connect_failure_time: float = 0.0
         self._cooldown_seconds: float = 30.0
+
+    @staticmethod
+    def _calculate_backoff_delay(attempt: int, base_delay: float = 0.5, max_delay: float = 5.0) -> float:
+        """Calculate bounded exponential backoff with full jitter to handle transient 503/429 errors."""
+        # Exponential backoff: base_delay * 2^(attempt - 1)
+        exp_delay = min(max_delay, base_delay * (2 ** (attempt - 1)))
+        # Full jitter between 0 and exp_delay to distribute burst concurrent requests
+        return random.uniform(0.1, exp_delay)
 
     @property
     def provider_name(self) -> str:
@@ -237,7 +246,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         )
                         last_error = RuntimeError(f"Bifrost HTTP {resp.status_code}: {resp.text[:200]}")
                         if attempts <= self._max_retries:
-                            await asyncio.sleep(1.0 * attempts)
+                            backoff = self._calculate_backoff_delay(attempts)
+                            await asyncio.sleep(backoff)
                         continue
 
                     data = resp.json()
@@ -371,7 +381,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         )
                         last_error = RuntimeError(f"Bifrost HTTP {resp.status_code}: {resp.text[:200]}")
                         if attempts <= self._max_retries:
-                            await asyncio.sleep(1.0 * attempts)
+                            backoff = self._calculate_backoff_delay(attempts)
+                            await asyncio.sleep(backoff)
                         continue
 
                     data = resp.json()
@@ -481,7 +492,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         )
                         last_error = RuntimeError(f"Bifrost HTTP {resp.status_code}: {resp.text[:200]}")
                         if attempts <= self._max_retries:
-                            await asyncio.sleep(1.0 * attempts)
+                            backoff = self._calculate_backoff_delay(attempts)
+                            await asyncio.sleep(backoff)
                         continue
 
                     data = resp.json()

@@ -52,6 +52,17 @@ async def limit_request_size_middleware(request: Request, call_next):
 app.include_router(api_v1_router)
 
 
+@app.get("/health", tags=["Root"], status_code=status.HTTP_200_OK)
+async def root_health_check():
+    """Top-level health check endpoint for Render and infrastructure probes."""
+    return {
+        "status": "healthy",
+        "service": settings.app_name,
+        "version": settings.app_version,
+        "environment": settings.environment,
+    }
+
+
 @app.get("/", tags=["Root"])
 async def root():
     return {

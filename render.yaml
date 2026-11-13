@@ -1,0 +1,124 @@
+# ==============================================================================
+# EpoClaim — Render Blueprint Specification (render.yaml)
+# Provisions both Backend Web Service and Frontend Static Site in one workflow
+# ==============================================================================
+# Docs: https://render.com/docs/blueprint-spec
+# ==============================================================================
+
+version: "1"
+
+# ------------------------------------------------------------------------------
+# Shared Environment Variables Group
+# ------------------------------------------------------------------------------
+envVarGroups:
+  - name: epoclaim-shared-config
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: APP_DEBUG
+        value: "false"
+
+services:
+  # ============================================================================
+  # 1. Backend Web Service (FastAPI)
+  # ============================================================================
+  - type: web
+    name: epoclaim-backend
+    runtime: python
+    plan: free
+    region: oregon
+    rootDir: backend
+    buildCommand: pip install -r requirements.txt
+    startCommand: uvicorn app.main:app --host 0.0.0.0 --port $PORT
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      # Inherit shared non-secret settings
+      - fromGroup: epoclaim-shared-config
+
+      # Runtime host & port binding
+      - key: HOST
+        value: 0.0.0.0
+      - key: PYTHON_VERSION
+        value: 3.11.9
+
+      # CORS Origin Whitelist:
+      # Allows localhost development origins plus wildcard/pattern for the Render static site.
+      # When deployed, epoclaim-frontend is also explicitly permitted.
+      - key: CORS_ORIGINS
+        value: "*"
+
+      # Security & Limits
+      - key: MAX_BODY_BYTES
+        value: "2097152"
+      - key: MAX_TEXT_CHARS
+        value: "100000"
+
+      # Storage & Persistence
+      # SQLite ephemeral path; state-independent fact verification requires no disk persistence.
+      - key: DATABASE_URL
+        value: sqlite:///./epoclaim.db
+
+      # Temporal Reasoning & Verification Defaults
+      - key: DEFAULT_HALF_LIFE_HOURS
+        value: "168.0"
+      - key: RRF_K
+        value: "60"
+      - key: ENTAILMENT_THRESHOLD
+        value: "0.65"
+      - key: CONTRADICTION_THRESHOLD
+        value: "0.60"
+      - key: ENABLE_CORRELATION_DISCOUNTED_SCORING
+        value: "false"
+
+      # Optional LLM Feature Flags (Disabled by default for fast, deterministic startup)
+      - key: ENABLE_LLM_SEMANTIC_ASSESSMENT
+        value: "false"
+      - key: ENABLE_LLM_CLAIM_DECOMPOSITION
+        value: "false"
+      - key: ENABLE_LLM_ANSWER_CORRECTION
+        value: "false"
+
+      # ------------------------------------------------------------------------
+      # Secure Credentials (Render prompts for these on initial Blueprint creation)
+      # ------------------------------------------------------------------------
+      - key: TAVILY_API_KEY
+        sync: false
+
+      - key: BIFROST_BASE_URL
+        sync: false
+
+      - key: BIFROST_API_KEY
+        sync: false
+
+      - key: BIFROST_MODEL
+        value: gpt-4o-mini
+
+      - key: EPOCLAIM_API_KEY
+        sync: false
+
+      - key: EPOCLAIM_ADMIN_API_KEY
+        sync: false
+
+  # ============================================================================
+  # 2. Frontend Static Site (React + Vite)
+  # ============================================================================
+  - type: web
+    name: epoclaim-frontend
+    runtime: static
+    rootDir: frontend
+    buildCommand: npm ci && npm run build
+    staticPublishPath: dist
+    autoDeploy: true
+    routes:
+      # SPA rewrite rule: route all subpaths to index.html for client-side routing
+      - type: rewrite
+        source: /*
+        destination: /index.html
+    envVars:
+      # Automatically wire backend's dynamic public URL into Vite at build time
+      - key: VITE_API_BASE_URL
+        fromService:
+          type: web
+          name: epoclaim-backend
+          envVarKey: RENDER_EXTERNAL_URL

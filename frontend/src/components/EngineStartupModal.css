@@ -1,0 +1,361 @@
+/* =========================================================================
+   EpoClaim Engine Wakeup & Cinematic Startup Modal
+   Glassmorphic translucent emerald container, glowing indicators,
+   smooth percentage track, rotating status messages, retry controls.
+   ========================================================================= */
+
+.engine-startup-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1.5rem;
+  background: radial-gradient(circle at 50% 30%, rgba(10, 38, 26, 0.72) 0%, rgba(4, 16, 11, 0.88) 100%);
+  backdrop-filter: blur(28px) saturate(160%);
+  -webkit-backdrop-filter: blur(28px) saturate(160%);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.4s cubic-bezier(0.16, 1, 0.3, 1), visibility 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.engine-startup-overlay.active {
+  opacity: 1;
+  visibility: visible;
+}
+
+.engine-startup-card {
+  position: relative;
+  width: 100%;
+  max-width: 580px;
+  background: linear-gradient(145deg, rgba(16, 44, 30, 0.58) 0%, rgba(8, 24, 16, 0.72) 100%);
+  border: 1px solid rgba(92, 219, 149, 0.22);
+  border-radius: 20px;
+  padding: 2.75rem 2.5rem;
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5), 0 0 32px rgba(92, 219, 149, 0.12), inset 0 1px 1px rgba(255, 255, 255, 0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  overflow: hidden;
+  animation: startup-card-enter 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes startup-card-enter {
+  from {
+    transform: translateY(18px) scale(0.97);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0) scale(1);
+    opacity: 1;
+  }
+}
+
+.engine-startup-card::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 15%;
+  right: 15%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(92, 219, 149, 0.6), transparent);
+}
+
+/* Close / abort button */
+.engine-startup-close-btn {
+  position: absolute;
+  top: 1.15rem;
+  right: 1.15rem;
+  width: 34px;
+  height: 34px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  color: #94a3b8;
+  font-size: 16px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.engine-startup-close-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+  border-color: rgba(92, 219, 149, 0.3);
+}
+
+/* Pulse Beacon Orb */
+.startup-beacon-container {
+  position: relative;
+  width: 72px;
+  height: 72px;
+  margin-bottom: 1.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.startup-beacon-core {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: radial-gradient(circle, #5cdb95 0%, #15803d 70%, #064e3b 100%);
+  box-shadow: 0 0 24px rgba(92, 219, 149, 0.55), inset 0 0 8px rgba(255, 255, 255, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 2;
+}
+
+.startup-beacon-core.error {
+  background: radial-gradient(circle, #f87171 0%, #dc2626 70%, #7f1d1d 100%);
+  box-shadow: 0 0 24px rgba(248, 113, 113, 0.55);
+}
+
+.startup-beacon-core.ready {
+  background: radial-gradient(circle, #34d399 0%, #059669 70%, #064e3b 100%);
+  box-shadow: 0 0 28px rgba(52, 211, 153, 0.8);
+}
+
+.startup-beacon-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(92, 219, 149, 0.45);
+  animation: beacon-ripple 2.2s cubic-bezier(0.16, 1, 0.3, 1) infinite;
+}
+
+.startup-beacon-ring.delayed {
+  animation-delay: 1.1s;
+}
+
+@keyframes beacon-ripple {
+  0% {
+    transform: scale(0.65);
+    opacity: 0.9;
+  }
+  100% {
+    transform: scale(1.6);
+    opacity: 0;
+  }
+}
+
+/* Brand and Subtitles */
+.startup-brand-title {
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.5rem;
+  font-weight: 800;
+  letter-spacing: 0.28em;
+  color: #ffffff;
+  text-transform: uppercase;
+  margin: 0 0 0.5rem 0;
+  text-shadow: 0 0 20px rgba(92, 219, 149, 0.4);
+}
+
+.startup-subheading {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  letter-spacing: 0.16em;
+  color: #5cdb95;
+  text-transform: uppercase;
+  margin: 0 0 1.75rem 0;
+}
+
+/* Progress Section */
+.startup-progress-section {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
+}
+
+.startup-pct-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  width: 100%;
+}
+
+.startup-status-phrase {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.85rem;
+  color: #cbd5e1;
+  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 1.3rem;
+}
+
+.startup-status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background-color: #5cdb95;
+  box-shadow: 0 0 8px #5cdb95;
+  animation: pulse-dot 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% { opacity: 0.4; transform: scale(0.85); }
+  50% { opacity: 1; transform: scale(1.2); }
+}
+
+.startup-pct-num {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 1.35rem;
+  font-weight: 700;
+  color: #ffffff;
+  letter-spacing: 0.05em;
+  text-shadow: 0 0 12px rgba(92, 219, 149, 0.4);
+}
+
+.startup-track {
+  width: 100%;
+  height: 6px;
+  background: rgba(6, 20, 14, 0.8);
+  border: 1px solid rgba(92, 219, 149, 0.15);
+  border-radius: 999px;
+  overflow: hidden;
+  position: relative;
+}
+
+.startup-fill {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #10b981 0%, #5cdb95 60%, #a7f3d0 100%);
+  box-shadow: 0 0 12px rgba(92, 219, 149, 0.7);
+  transition: width 0.35s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.startup-fill.error {
+  background: #f87171;
+  box-shadow: 0 0 12px rgba(248, 113, 113, 0.7);
+}
+
+/* Informational note & cold-start notice */
+.startup-info-note {
+  font-size: 0.78rem;
+  color: #94a3b8;
+  line-height: 1.5;
+  margin: 0;
+  max-width: 460px;
+}
+
+.startup-info-note .highlight {
+  color: #e2e8f0;
+}
+
+.startup-timer-tag {
+  margin-top: 1rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.72rem;
+  color: #64748b;
+  letter-spacing: 0.05em;
+}
+
+/* Error & Retry State */
+.startup-error-box {
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 1rem 1.25rem;
+  border-radius: 12px;
+  background: rgba(239, 68, 68, 0.12);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  align-items: center;
+}
+
+.startup-error-msg {
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  color: #fca5a5;
+  margin: 0;
+}
+
+.startup-btn-group {
+  display: flex;
+  gap: 0.75rem;
+  flex-wrap: wrap;
+  justify-content: center;
+}
+
+.startup-retry-btn {
+  background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+  color: #ffffff;
+  border: none;
+  border-radius: 8px;
+  padding: 0.55rem 1.25rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+}
+
+.startup-retry-btn:hover {
+  background: linear-gradient(135deg, #10b981 0%, #34d399 100%);
+  transform: translateY(-1px);
+}
+
+.startup-bypass-btn {
+  background: rgba(255, 255, 255, 0.05);
+  color: #cbd5e1;
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 8px;
+  padding: 0.55rem 1.25rem;
+  font-family: "JetBrains Mono", monospace;
+  font-size: 0.8rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.startup-bypass-btn:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #ffffff;
+}
+
+/* Accessibility: Reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .engine-startup-overlay,
+  .engine-startup-card,
+  .startup-fill {
+    transition: none !important;
+    animation: none !important;
+  }
+  .startup-beacon-ring {
+    display: none;
+  }
+  .startup-status-dot {
+    animation: none !important;
+  }
+}
+
+/* Mobile responsiveness */
+@media (max-width: 640px) {
+  .engine-startup-card {
+    padding: 2rem 1.5rem;
+  }
+  .startup-brand-title {
+    font-size: 1.25rem;
+    letter-spacing: 0.2em;
+  }
+  .startup-subheading {
+    font-size: 0.72rem;
+  }
+  .startup-status-phrase {
+    font-size: 0.78rem;
+  }
+  .startup-pct-num {
+    font-size: 1.15rem;
+  }
+}
+

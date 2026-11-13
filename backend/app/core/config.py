@@ -1,8 +1,10 @@
 """EpoClaim application configuration."""
 from __future__ import annotations
 
-from typing import List
-from pydantic import AliasChoices, Field
+from typing import List, Union
+from pathlib import Path
+import json
+from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -10,11 +12,23 @@ class Settings(BaseSettings):
     app_name: str = "EpoClaim"
     app_version: str = "0.1.0"
     app_debug: bool = False
-    environment: str = "development"
+    environment: str = Field(
+        default="development",
+        validation_alias=AliasChoices("ENVIRONMENT", "EPOCLAIM_ENVIRONMENT"),
+        description="Deployment environment (development, staging, production)",
+    )
 
     # Server & Security
-    host: str = "127.0.0.1"
-    port: int = 8000
+    host: str = Field(
+        default="0.0.0.0",
+        validation_alias=AliasChoices("EPOCLAIM_HOST", "HOST"),
+        description="Bind host address for the server",
+    )
+    port: int = Field(
+        default=8000,
+        validation_alias=AliasChoices("PORT", "EPOCLAIM_PORT"),
+        description="Bind port for the server, respecting Render $PORT dynamic injection",
+    )
     api_key: str = Field(
         default="",
         validation_alias=AliasChoices("EPOCLAIM_API_KEY", "API_KEY"),
@@ -27,13 +41,32 @@ class Settings(BaseSettings):
     )
     max_body_bytes: int = 2_097_152  # 2MB
     max_text_chars: int = 100_000
-    cors_origins: List[str] = [
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-        "*"
-    ]
+    cors_origins: Union[List[str], str] = Field(
+        default=[
+            "http://localhost:5173",
+            "http://127.0.0.1:5173",
+            "http://localhost:3000",
+            "http://127.0.0.1:3000",
+            "*",
+        ],
+        validation_alias=AliasChoices("CORS_ORIGINS", "EPOCLAIM_CORS_ORIGINS"),
+        description="Allowed CORS origins list or comma-separated string",
+    )
+
+    @field_validator("cors_origins", mode="before")
+    @classmethod
+    def parse_cors_origins(cls, v: Union[List[str], str]) -> List[str]:
+        if isinstance(v, str):
+            v_str = v.strip()
+            if v_str.startswith("[") and v_str.endswith("]"):
+                try:
+                    parsed = json.loads(v_str)
+                    if isinstance(parsed, list):
+                        return [str(o).strip() for o in parsed if str(o).strip()]
+                except Exception:
+                    pass
+            return [origin.strip() for origin in v_str.split(",") if origin.strip()]
+        return v
 
     # Persistence
     database_url: str = "sqlite:///./epoclaim.db"
@@ -91,9 +124,18 @@ class Settings(BaseSettings):
     enable_llm_answer_correction: bool = False
     answer_correction_timeout_seconds: float = 8.0
 
+    # Dynamic path resolution to reliably discover root or backend .env
+    _backend_dir = Path(__file__).resolve().parent.parent.parent
+    _root_dir = _backend_dir.parent
+
     model_config = SettingsConfigDict(
         env_prefix="EPOCLAIM_",
-        env_file=[".env", "backend/.env"],
+        env_file=[
+            str(_root_dir / ".env"),
+            str(_backend_dir / ".env"),
+            ".env",
+            "backend/.env",
+        ],
         env_file_encoding="utf-8",
         extra="ignore",
     )

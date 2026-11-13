@@ -3,7 +3,7 @@ from __future__ import annotations
 
 from datetime import datetime
 from typing import Any, Dict, List, Optional, Union
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, field_validator
 
 from app.schemas.claims import AtomicClaim
 from app.schemas.evidence import EvidenceRecord
@@ -72,10 +72,22 @@ class AnalyzeRequest(BaseModel):
         ...,
         description="The AI-generated response text to verify for factuality and freshness"
     )
-    context_documents: Optional[List[Union[str, Dict[str, Any]]]] = Field(
+    context_documents: Optional[Union[List[Union[str, Dict[str, Any]]], str]] = Field(
         default=None,
-        description="Optional local grounding documents (plain strings or dicts with metadata) to include alongside live search"
+        description="Optional local grounding documents (plain strings, list of strings, or dicts with metadata) to include alongside live search"
     )
+
+    @field_validator("context_documents", mode="before")
+    @classmethod
+    def normalize_context_documents(cls, v: Any) -> Optional[List[Union[str, Dict[str, Any]]]]:
+        if v is None:
+            return None
+        if isinstance(v, str):
+            trimmed = v.strip()
+            return [trimmed] if trimmed else None
+        if isinstance(v, list):
+            return v
+        return [v]
     enable_live_search: bool = Field(
         default=True,
         description="Whether to query live web search via Tavily"

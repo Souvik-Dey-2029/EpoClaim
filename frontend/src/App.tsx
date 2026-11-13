@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { checkHealth, analyzeResponse, runBenchmark, getTavilyStatus } from "./api";
 import type { FinalReport, ClaimAnalysisDetail, BenchmarkReport, TavilyStatus } from "./types";
 import { VelvetFabricBackground } from "./components/VelvetFabricBackground";
@@ -7,6 +7,7 @@ import { LandingHero } from "./components/LandingHero";
 import { AnalyzerWorkspace } from "./components/AnalyzerWorkspace";
 import { BenchmarkSuiteView } from "./components/BenchmarkSuiteView";
 import { DeveloperHubView } from "./components/DeveloperHubView";
+import { EngineStartupModal } from "./components/EngineStartupModal";
 
 const PRESET_SCENARIOS = [
   {
@@ -53,6 +54,7 @@ export function App() {
   const [health, setHealth] = useState<{ status: string; integrations: Record<string, boolean> } | null>(null);
   const [healthChecking, setHealthChecking] = useState<boolean>(true);
   const [tavilyStatus, setTavilyStatus] = useState<TavilyStatus | null>(null);
+  const [isWakingUp, setIsWakingUp] = useState<boolean>(false);
 
   // Analyzer state
   const [prompt, setPrompt] = useState("");
@@ -78,8 +80,16 @@ export function App() {
     return () => window.removeEventListener("popstate", handlePopState);
   }, []);
 
-  // Sync route changes with window.history
+  // Ref to track latest health status synchronously for immediate routing decisions
+  const healthRef = useRef<string | null>(null);
+
+  // Sync route changes with window.history, triggering wakeup modal if navigating to analyzer while backend is cold
   const navigateTo = (route: AppRoute) => {
+    if (route === "analyzer" && healthRef.current !== "healthy") {
+      setIsWakingUp(true);
+      return;
+    }
+
     const targetPath = route === "landing" ? "/" : `/${route}`;
     if (window.location.pathname !== targetPath) {
       window.history.pushState(null, "", targetPath);
@@ -88,19 +98,45 @@ export function App() {
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
+  const handleWakeupReady = () => {
+    setIsWakingUp(false);
+    healthRef.current = "healthy";
+    setHealth({
+      status: "healthy",
+      integrations: { storage_sqlite: true, dense_retrieval: true, nli_verification: true },
+    });
+    setHealthChecking(false);
+
+    // Transition directly to the Analyzer workspace
+    const targetPath = "/analyzer";
+    if (window.location.pathname !== targetPath) {
+      window.history.pushState(null, "", targetPath);
+    }
+    setCurrentRoute("analyzer");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   useEffect(() => {
     let isMounted = true;
+
+    // Only query backend health immediately if user landed directly on /analyzer or /benchmark.
+    // When visiting the landing page (/), do not wake the backend unnecessarily.
+    const shouldCheckImmediately =
+      window.location.pathname.startsWith("/analyzer") ||
+      window.location.pathname.startsWith("/benchmark");
 
     const performHealthCheck = async () => {
       try {
         const res = await checkHealth();
         if (isMounted) {
           setHealth(res);
+          healthRef.current = res.status;
           setHealthChecking(false);
         }
       } catch {
         if (isMounted) {
           setHealth({ status: "offline", integrations: {} });
+          healthRef.current = "offline";
           setHealthChecking(false);
         }
       }
@@ -113,10 +149,18 @@ export function App() {
       }
     };
 
-    performHealthCheck();
+    if (shouldCheckImmediately) {
+      performHealthCheck();
+    } else {
+      setHealthChecking(false);
+    }
 
-    // Sensible polling interval (every 30 seconds) to detect engine availability changes
-    const interval = setInterval(performHealthCheck, 30000);
+    // Polling interval (every 30 seconds) to detect engine status changes
+    const interval = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        performHealthCheck();
+      }
+    }, 30000);
 
     // Initial check for cached benchmark to populate active evaluation session
     fetch("/cached_benchmark.json")
@@ -300,6 +344,13 @@ export function App() {
             <DeveloperHubView />
           )}
         </main>
+
+        {/* Cinematic EpoClaim Startup & Wakeup Modal */}
+        <EngineStartupModal
+          isOpen={isWakingUp}
+          onReady={handleWakeupReady}
+          onCancel={() => setIsWakingUp(false)}
+        />
       </div>
     </div>
   );

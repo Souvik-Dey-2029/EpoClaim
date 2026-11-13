@@ -42,8 +42,8 @@ class EpoClaimPipeline:
     """Master pipeline orchestrating all EpoClaim subsystems."""
 
     def __init__(self, semantic_provider: Optional[BaseSemanticReasoningProvider] = None):
-        self.verifier = ClaimVerificationService()
-        self.semantic_provider = semantic_provider or getattr(self.verifier, "_bifrost_provider", None)
+        self.verifier = ClaimVerificationService(semantic_provider=semantic_provider)
+        self.semantic_provider = semantic_provider or getattr(self.verifier, "semantic_provider", None)
         self.extractor = ClaimExtractionService(semantic_provider=self.semantic_provider)
         self.normalizer = ClaimNormalizationService()
         self.temporal_analyzer = TemporalAnalysisService()
