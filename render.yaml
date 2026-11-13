@@ -42,11 +42,13 @@ services:
       - key: PYTHON_VERSION
         value: 3.11.9
 
-      # CORS Origin Whitelist:
-      # Allows localhost development origins plus wildcard/pattern for the Render static site.
-      # When deployed, epoclaim-frontend is also explicitly permitted.
+      # CORS Origin Configuration:
+      # Specific deployed origin + regex matching Render frontend instances/PR previews.
+      # Wildcard '*' is strictly avoided because allow_credentials=True is enabled.
       - key: CORS_ORIGINS
-        value: "*"
+        value: https://epoclaim-frontend.onrender.com,http://localhost:5173
+      - key: CORS_ORIGIN_REGEX
+        value: "^https://epoclaim-frontend.*\\.onrender\\.com$"
 
       # Security & Limits
       - key: MAX_BODY_BYTES
