@@ -1,8 +1,22 @@
 # EpoClaim — Render Blueprint Deployment Guide
 
-This guide documents the unified **Render Blueprint** (`render.yaml`) deployment for EpoClaim.
+This guide documents deploying the entire EpoClaim application (FastAPI backend + React Vite frontend) from this single monorepo repository using **Render Blueprints** (`render.yaml`).
 
-With this configuration, both the **FastAPI Backend (Python Web Service)** and the **React + Vite Frontend (Static Site)** are provisioned, configured, and networked together in a single deployment flow.
+Repository: `https://github.com/Souvik-Dey-2029/EpoClaim`
+
+---
+
+## Why the Initial Standalone Web Service Build Failed
+
+When deploying a monorepo as a standard manual Render Web Service without configuring `Root Directory`:
+1. Render executed `pip install -r requirements.txt` directly at the **repository root**.
+2. Because EpoClaim is a monorepo where the Python application and `requirements.txt` live inside the `backend/` folder (and the React application lives inside `frontend/`), Render could not locate `requirements.txt` at the root and failed with:
+   ```
+   ERROR: Could not open requirements file: [Errno 2] No such file or directory: 'requirements.txt'
+   ```
+3. Attempting to deploy manually also requires creating two separate disconnected services and manually copying URLs back and forth.
+
+**The Solution:** The root-level [render.yaml](file:///d:/Development/Projects/MY%20PERSONAAL%20WORKS/Global/EPOCLAIM/render.yaml) Blueprint explicitly assigns `rootDir: backend` for the Python Web Service and `rootDir: frontend` for the Static Site. Render switches to the appropriate subfolder before executing install, build, and run commands.
 
 ---
 
@@ -45,11 +59,11 @@ The repository root includes a declarative [render.yaml](file:///d:/Development/
 
 2. **Backend Web Service (`epoclaim-backend`):**
    - **Type:** `web` | **Runtime:** `python` | **Plan:** `free`
-   - **Root Directory:** `backend`
+   - **Root Directory:** `backend` *(solves the requirements.txt path issue)*
    - **Build Command:** `pip install -r requirements.txt`
    - **Start Command:** `uvicorn app.main:app --host 0.0.0.0 --port $PORT`
    - **Health Check Path:** `/health`
-   - **CORS Allowed Origins:** Permitted globally or restricted to the static site.
+   - **CORS Allowed Origins:** Restricts origin to `https://epoclaim-frontend.onrender.com` and `^https://epoclaim-frontend.*\.onrender\.com$` with `allow_credentials=True`.
 
 3. **Frontend Static Site (`epoclaim-frontend`):**
    - **Type:** `web` | **Runtime:** `static`
@@ -74,7 +88,10 @@ The repository root includes a declarative [render.yaml](file:///d:/Development/
 To deploy both services to Render together:
 
 1. **Push Repository to GitHub:**
-   Ensure the latest code containing `render.yaml`, `backend/`, and `frontend/` is pushed to your GitHub repository.
+   Ensure the latest commits on branch `main` are pushed to `https://github.com/Souvik-Dey-2029/EpoClaim`:
+   ```bash
+   git push origin main
+   ```
 
 2. **Open Render Dashboard:**
    - Log into [dashboard.render.com](https://dashboard.render.com).
@@ -82,10 +99,15 @@ To deploy both services to Render together:
    - Select **Blueprint**.
 
 3. **Connect Repository:**
-   - Choose your GitHub repository (`EPOCLAIM`).
+   - Connect your GitHub account and choose `Souvik-Dey-2029/EpoClaim`.
    - Render automatically detects `render.yaml` at the root and presents the configuration summary.
 
-4. **Supply Requested Secret Credentials (`sync: false`):**
+4. **Review Both Services:**
+   - Render displays two services:
+     1. `epoclaim-backend` (Web Service, Python)
+     2. `epoclaim-frontend` (Static Site, Node)
+
+5. **Supply Requested Secret Credentials (`sync: false`):**
    During Blueprint setup, Render will prompt for the sensitive credentials that are intentionally untracked in Git:
    - `TAVILY_API_KEY`: *(Optional)* Your Tavily API key for live web search. If left blank, EpoClaim defaults to deterministic offline analysis.
    - `BIFROST_BASE_URL`: *(Optional)* URL for your LLM gateway (e.g. `http://localhost:8080/v1` or OpenAI proxy).
@@ -93,10 +115,15 @@ To deploy both services to Render together:
    - `EPOCLAIM_API_KEY`: *(Optional)* Global client API key to protect your API endpoints. Leave blank for public access.
    - `EPOCLAIM_ADMIN_API_KEY`: *(Optional)* Admin key for privileged maintenance operations.
 
-5. **Deploy:**
+6. **Apply Blueprint:**
    - Click **Apply Blueprint**.
    - Render provisions both the backend Web Service and the frontend Static Site in parallel.
    - Render automatically passes the generated backend URL (`https://epoclaim-backend.onrender.com`) into the frontend build environment as `VITE_API_BASE_URL`.
+
+7. **Verify Connectivity:**
+   - Visit `https://epoclaim-frontend.onrender.com`.
+   - The landing page and Benchmark Suite load instantly.
+   - Clicking **Answer Analyzer** pings `GET /health` / `GET /api/v1/health` and displays the cold-start startup modal until the backend is awake, then automatically transitions into the analyzer workspace.
 
 ---
 
@@ -110,7 +137,8 @@ A single unified [.env.example](file:///d:/Development/Projects/MY%20PERSONAAL%2
 | `APP_DEBUG` | Backend (Shared) | No | `false` | Enable/disable verbose debug logs. |
 | `HOST` | Backend | No | `0.0.0.0` | Ingress bind address for container environment. |
 | `PORT` | Backend | No | Injected by Render | Container port binding (handled dynamically by `$PORT`). |
-| `CORS_ORIGINS` | Backend | No | `*` | Allowed CORS origins for browser fetch requests. |
+| `CORS_ORIGINS` | Backend | No | `https://epoclaim-frontend.onrender.com,http://localhost:5173` | Allowed CORS origins for browser fetch requests. |
+| `CORS_ORIGIN_REGEX` | Backend | No | `^https://epoclaim-frontend.*\.onrender\.com$` | Regex matching Render frontend subdomains and PR previews. |
 | `DATABASE_URL` | Backend | No | `sqlite:///./epoclaim.db` | Local SQLite database URL. |
 | `TAVILY_API_KEY` | Backend | **Yes** | `""` | Outbound live search API key. |
 | `BIFROST_BASE_URL` | Backend | **Yes** | `""` | LLM Gateway base URL. |
