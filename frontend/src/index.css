@@ -556,6 +556,126 @@ html, body {
   transform: translateY(-1px);
 }
 
+/* ──────────────────────────────────────────────────────────────────────────
+   Hero Benchmark Performance Snapshot Strip (Glassmorphism Emerald Bar)
+   ────────────────────────────────────────────────────────────────────────── */
+.hero-benchmark-snapshot-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.25rem;
+  width: 100%;
+  margin-top: 1.75rem;
+  padding: 0.85rem 1.35rem;
+  background: rgba(8, 28, 21, 0.65);
+  border: 1px solid rgba(52, 211, 153, 0.22);
+  border-radius: 12px;
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.08);
+  font-family: var(--font-mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace);
+  font-size: 0.78rem;
+  flex-wrap: wrap;
+}
+
+.snapshot-label-col {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.65rem;
+  white-space: nowrap;
+}
+
+.snapshot-pulse-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background-color: #34d399;
+  box-shadow: 0 0 10px #34d399;
+  display: inline-block;
+  animation: pulse-dot 2s infinite;
+}
+
+@keyframes pulse-dot {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.4;
+    transform: scale(0.85);
+  }
+}
+
+.snapshot-tag {
+  color: #fbbf24;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.snapshot-trials {
+  color: #a8a29e;
+  font-size: 0.75rem;
+}
+
+.snapshot-metrics-cluster {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.9rem;
+  flex-wrap: wrap;
+}
+
+.snapshot-metric-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  white-space: nowrap;
+}
+
+.snapshot-k {
+  color: #a8a29e;
+  font-size: 0.72rem;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.snapshot-v {
+  font-weight: 700;
+  font-size: 0.82rem;
+}
+
+.snapshot-sep {
+  color: rgba(168, 162, 158, 0.35);
+  font-weight: 300;
+  user-select: none;
+}
+
+.snapshot-explore-btn {
+  background: rgba(16, 185, 129, 0.12);
+  border: 1px solid rgba(52, 211, 153, 0.35);
+  color: #34d399;
+  padding: 0.45rem 0.9rem;
+  border-radius: 6px;
+  font-size: 0.74rem;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  text-decoration: none;
+}
+
+.snapshot-explore-btn:hover {
+  background: rgba(16, 185, 129, 0.25);
+  color: #6ee7b7;
+  border-color: rgba(52, 211, 153, 0.6);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(16, 185, 129, 0.25);
+}
+
 /* Animations */
 @keyframes maskRevealUp {
   0% {
