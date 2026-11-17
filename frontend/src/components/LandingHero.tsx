@@ -76,38 +76,40 @@ export function LandingHero({
 
         {/* Compact, Data-Driven Benchmark Performance Snapshot */}
         {benchmarkResult && (
-          <div className="hero-benchmark-snapshot-bar animate-mask-reveal delay-5 font-mono">
+          <div className="hero-benchmark-snapshot-bar animate-mask-reveal delay-5">
             <div className="snapshot-label-col">
               <span className="snapshot-pulse-dot" />
               <span className="snapshot-tag">BENCHMARK SNAPSHOT</span>
-              <span className="snapshot-trials text-stone-400">({benchmarkResult.total_trials} Trials &bull; 18 Scenarios)</span>
+              <span className="snapshot-trials">
+                ({benchmarkResult.total_trials} Trials &bull; {benchmarkResult.total_scenarios ?? 18} Scenarios)
+              </span>
             </div>
 
             <div className="snapshot-metrics-cluster">
               <div className="snapshot-metric-item">
-                <span className="snapshot-k text-stone-400">NORMALIZED ACCURACY</span>
-                <span className="snapshot-v text-emerald-300 font-bold">
+                <span className="snapshot-k">NORMALIZED ACCURACY</span>
+                <span className="snapshot-v val-emerald">
                   {((benchmarkResult.normalized_verdict_accuracy ?? 1.0) * 100).toFixed(1)}%
                 </span>
               </div>
-              <span className="snapshot-sep text-stone-600">/</span>
+              <span className="snapshot-divider" aria-hidden="true" />
               <div className="snapshot-metric-item">
-                <span className="snapshot-k text-stone-400">EXACT ACCURACY</span>
-                <span className="snapshot-v text-stone-200 font-bold">
+                <span className="snapshot-k">EXACT ACCURACY</span>
+                <span className="snapshot-v val-parchment">
                   {((benchmarkResult.exact_verdict_accuracy ?? 0.9722) * 100).toFixed(1)}%
                 </span>
               </div>
-              <span className="snapshot-sep text-stone-600">/</span>
+              <span className="snapshot-divider" aria-hidden="true" />
               <div className="snapshot-metric-item">
-                <span className="snapshot-k text-stone-400">STALE RECALL</span>
-                <span className="snapshot-v text-amber-300 font-bold">
+                <span className="snapshot-k">STALE RECALL</span>
+                <span className="snapshot-v val-amber">
                   {((benchmarkResult.stale_detection_rate ?? 1.0) * 100).toFixed(1)}%
                 </span>
               </div>
-              <span className="snapshot-sep text-stone-600">/</span>
+              <span className="snapshot-divider" aria-hidden="true" />
               <div className="snapshot-metric-item">
-                <span className="snapshot-k text-stone-400">FALSE STALE PENALTY</span>
-                <span className="snapshot-v text-emerald-400 font-bold">
+                <span className="snapshot-k">FALSE STALE PENALTY</span>
+                <span className="snapshot-v val-emerald">
                   {((benchmarkResult.false_stale_detection_rate ?? 0.0) * 100).toFixed(1)}%
                 </span>
               </div>
@@ -115,10 +117,12 @@ export function LandingHero({
 
             <button
               type="button"
-              className="snapshot-explore-btn text-emerald-400 hover:text-emerald-300"
+              className="snapshot-explore-btn"
               onClick={onNavigateBenchmark}
+              title="Inspect full benchmark telemetry and scenarios"
             >
-              Audit Details ↗
+              <span>Audit Details</span>
+              <span className="snapshot-explore-arrow">↗</span>
             </button>
           </div>
         )}

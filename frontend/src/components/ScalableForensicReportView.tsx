@@ -391,8 +391,146 @@ export function ScalableForensicReportView({
           </div>
 
           <div className="revised-callout-card">
-            <div className="revised-prose-container">
-              <p className="revised-body-text">{correctedText}</p>
+            {/* Structured Forensic Corrections List */}
+            <div className="revised-structured-container">
+              {(() => {
+                // Separate sentences/points from correctedText while preserving all content
+                const rawPoints = (correctedText.match(/(?:[^.?!]|\.(?![ \n\r]|$|\b\s*\[\d+\]))+(?:[.?!]+(?:\s*\[\d+\])*|$)/g) || [correctedText])
+                  .map((s) => s.trim())
+                  .filter(Boolean);
+
+                // Distinguish verified/corrected points from unverified uncertainty blocks
+                const verifiedPoints: string[] = [];
+                const unverifiedPoints: string[] = [];
+
+                rawPoints.forEach((point) => {
+                  const isUncertainty =
+                    point.toLowerCase().includes("unverified whether") ||
+                    point.toLowerCase().includes("insufficient corroborating evidence") ||
+                    point.toLowerCase().includes("insufficient evidence");
+                  if (isUncertainty) {
+                    unverifiedPoints.push(point);
+                  } else {
+                    verifiedPoints.push(point);
+                  }
+                });
+
+                // Render inline citation tags as clickable links
+                const renderWithCitations = (text: string) => {
+                  const parts = text.split(/(\[\d+\])/g);
+                  return parts.map((part, pIdx) => {
+                    const match = part.match(/^\[(\d+)\]$/);
+                    if (match) {
+                      const citeNum = parseInt(match[1], 10);
+                      const citation = citations.find((c) => c.citation_number === citeNum);
+                      return (
+                        <button
+                          key={pIdx}
+                          type="button"
+                          className="inline-citation-ref"
+                          onClick={() => {
+                            scrollToSection("sec-evidence");
+                          }}
+                          title={
+                            citation
+                              ? `Citation [${citeNum}]: ${citation.source_title} (${citation.snippet.slice(0, 80)}...)`
+                              : `Jump to Evidence Citation [${citeNum}]`
+                          }
+                        >
+                          [{citeNum}]
+                        </button>
+                      );
+                    }
+                    return part;
+                  });
+                };
+
+                // Render a single sentence/paragraph with subtle semantic highlights
+                const renderHighlightedSentence = (sentence: string, idx: number, isMulti: boolean) => {
+                  // Pattern 1: "Rather than 'X', reliable evidence confirms that Y."
+                  const ratherThanRegex = /^(Rather than\s+["'])(.*?)(["'],?\s*reliable evidence confirms that\s+)(.*)$/i;
+                  const rtMatch = sentence.match(ratherThanRegex);
+                  if (rtMatch) {
+                    const [, prefix, originalContra, transition, confirmedPart] = rtMatch;
+                    return (
+                      <div key={idx} className="correction-point-item corrected-point">
+                        {isMulti && <span className="correction-point-num mono-label">{String(idx + 1).padStart(2, "0")}.</span>}
+                        <div className="correction-point-content">
+                          <span className="correction-prefix-label">{prefix}</span>
+                          <span className="diff-highlight-contradicted" title="Original asserted statement refuted by reliable evidence">
+                            {originalContra}
+                          </span>
+                          <span className="correction-transition-label">{transition}</span>
+                          <span className="diff-highlight-verified" title="Verified factual evidence">
+                            {renderWithCitations(confirmedPart)}
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Pattern 2: "The statement 'X' is refuted by evidence."
+                  const refutedRegex = /^(The statement\s+["'])(.*?)(["']\s*is refuted by evidence\.?)$/i;
+                  const refMatch = sentence.match(refutedRegex);
+                  if (refMatch) {
+                    const [, prefix, refutedClaim, suffix] = refMatch;
+                    return (
+                      <div key={idx} className="correction-point-item refuted-point">
+                        {isMulti && <span className="correction-point-num mono-label">{String(idx + 1).padStart(2, "0")}.</span>}
+                        <div className="correction-point-content">
+                          <span className="correction-prefix-label">{prefix}</span>
+                          <span className="diff-highlight-contradicted" title="Refuted claim span">
+                            {refutedClaim}
+                          </span>
+                          <span className="correction-suffix-label"> {suffix}</span>
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  // Pattern 3: Standard verified fact sentence
+                  return (
+                    <div key={idx} className="correction-point-item verified-point">
+                      {isMulti && <span className="correction-point-num mono-label">{String(idx + 1).padStart(2, "0")}.</span>}
+                      <div className="correction-point-content">
+                        <span className="diff-highlight-verified">
+                          {renderWithCitations(sentence)}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                };
+
+                const isMultiPoint = verifiedPoints.length > 1;
+
+                return (
+                  <>
+                    {/* Section for Verified / Corrected Claims */}
+                    <div className={`revised-points-list ${isMultiPoint ? "is-numbered-list" : "is-single-paragraph"}`}>
+                      {verifiedPoints.map((point, idx) =>
+                        renderHighlightedSentence(point, idx, isMultiPoint)
+                      )}
+                    </div>
+
+                    {/* Explicit Separated Section for Unverified / Qualified Claims */}
+                    {unverifiedPoints.length > 0 && (
+                      <div className="revised-unverified-block">
+                        <div className="unverified-block-header mono-label">
+                          <span className="unverified-icon">⚠</span>
+                          <span className="unverified-tag">UNVERIFIED CLAIMS (INSUFFICIENT EVIDENCE)</span>
+                        </div>
+                        <div className="unverified-block-content">
+                          {unverifiedPoints.map((uvText, uvIdx) => (
+                            <p key={uvIdx} className="unverified-paragraph diff-highlight-unverified">
+                              {renderWithCitations(uvText)}
+                            </p>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
             </div>
 
             {/* Optional Original Comparison Drawer */}
