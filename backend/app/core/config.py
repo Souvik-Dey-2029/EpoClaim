@@ -1,9 +1,10 @@
 """EpoClaim application configuration."""
 from __future__ import annotations
 
-from typing import List, Union
+from typing import List, Union, Optional
 from pathlib import Path
 import json
+import os
 from pydantic import AliasChoices, Field, field_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -57,15 +58,15 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5173",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://epoclaim-frontend.onrender.com",
+            "https://epoclaim.vercel.app",
         ],
         validation_alias=AliasChoices("CORS_ORIGINS", "EPOCLAIM_CORS_ORIGINS"),
         description="Allowed CORS origins list or comma-separated string",
     )
     cors_origin_regex: str = Field(
-        default=r"^https://epoclaim-frontend.*\.onrender\.com$",
+        default=r"^(https://.*\.vercel\.app|https://.*\.onrender\.com|chrome-extension://.*)$",
         validation_alias=AliasChoices("CORS_ORIGIN_REGEX", "EPOCLAIM_CORS_ORIGIN_REGEX"),
-        description="Optional regex pattern matching allowed CORS origins (e.g. Render subdomains)",
+        description="Optional regex pattern matching allowed CORS origins (e.g. Vercel subdomains and Chrome Extensions)",
     )
 
     @field_validator("cors_origins", mode="before")
@@ -89,6 +90,25 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("DATABASE_URL", "EPOCLAIM_DATABASE_URL"),
     )
 
+    @field_validator("database_url", mode="before")
+    @classmethod
+    def resolve_database_url(cls, v: Optional[str]) -> str:
+        is_prod = (
+            os.environ.get("ENVIRONMENT", "").lower() == "production"
+            or bool(os.environ.get("VERCEL"))
+            or bool(os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
+        )
+        if is_prod:
+            if not v or not (v.startswith("postgresql://") or v.startswith("postgres://")):
+                raise ValueError(
+                    "Production deployment error: DATABASE_URL must be configured with a durable "
+                    "PostgreSQL/Supabase connection string (e.g. postgresql://user:pass@ep-xyz.supabase.com:5432/postgres). "
+                    "Ephemeral SQLite storage and silent fallback to /tmp are strictly prohibited in production "
+                    "to prevent data loss across serverless function instances."
+                )
+            return v
+        return v or "sqlite:///./epoclaim.db"
+
     # External APIs & Models
     tavily_api_key: str = Field(
         default="",
@@ -104,14 +124,63 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("TAVILY_SEARCH_DEPTH", "EPOCLAIM_TAVILY_SEARCH_DEPTH"),
     )
     tavily_rate_limit_per_minute: int = Field(
-        default=2,
+        default=60,
         validation_alias=AliasChoices("TAVILY_RATE_LIMIT_PER_MINUTE", "EPOCLAIM_TAVILY_RATE_LIMIT_PER_MINUTE"),
     )
     tavily_cache_ttl_hours: float = Field(
         default=24.0,
         validation_alias=AliasChoices("TAVILY_CACHE_TTL_HOURS", "EPOCLAIM_TAVILY_CACHE_TTL_HOURS"),
     )
-    tavily_max_searches_per_analysis: int = 5
+    tavily_budget_cap: int = Field(
+        default=5000,
+        validation_alias=AliasChoices("TAVILY_BUDGET_CAP", "EPOCLAIM_TAVILY_BUDGET_CAP", "TAVILY_MONTHLY_CREDIT_LIMIT"),
+        description="Persistent development credit hard cap for Tavily Search (default 5000 credits)",
+    )
+    tavily_monthly_credit_limit: int = Field(
+        default=5000,
+        validation_alias=AliasChoices("TAVILY_MONTHLY_CREDIT_LIMIT", "EPOCLAIM_TAVILY_MONTHLY_CREDIT_LIMIT", "TAVILY_BUDGET_CAP"),
+        description="Configured monthly Tavily credit allowance (default 5000 credits)",
+    )
+    tavily_warning_threshold: float = Field(
+        default=0.80,
+        validation_alias=AliasChoices("TAVILY_WARNING_THRESHOLD", "EPOCLAIM_TAVILY_WARNING_THRESHOLD"),
+        description="Usage ratio at which amber warning status is emitted (default 0.80)",
+    )
+    tavily_auto_search_restriction: float = Field(
+        default=0.90,
+        validation_alias=AliasChoices("TAVILY_AUTO_SEARCH_RESTRICTION", "EPOCLAIM_TAVILY_AUTO_SEARCH_RESTRICTION"),
+        description="Usage ratio at which automatic extension searches are restricted (default 0.90)",
+    )
+    tavily_hard_limit: float = Field(
+        default=1.00,
+        validation_alias=AliasChoices("TAVILY_HARD_LIMIT", "EPOCLAIM_TAVILY_HARD_LIMIT"),
+        description="Usage ratio at which all live web searches are strictly blocked (default 1.00)",
+    )
+    tavily_max_auto_analyses_per_hour: int = Field(
+        default=10,
+        validation_alias=AliasChoices("TAVILY_MAX_AUTO_ANALYSES_PER_HOUR", "EPOCLAIM_TAVILY_MAX_AUTO_ANALYSES_PER_HOUR"),
+        description="Maximum automatic analyses per hour per client/identity (default 10)",
+    )
+    tavily_auto_analysis_cooldown_seconds: int = Field(
+        default=30,
+        validation_alias=AliasChoices("TAVILY_AUTO_ANALYSIS_COOLDOWN_SECONDS", "EPOCLAIM_TAVILY_AUTO_ANALYSIS_COOLDOWN_SECONDS"),
+        description="Minimum cooldown seconds between automatic analyses (default 30s)",
+    )
+    tavily_max_searches_per_analysis: int = Field(
+        default=3,
+        validation_alias=AliasChoices("TAVILY_MAX_SEARCHES_PER_ANALYSIS", "EPOCLAIM_TAVILY_MAX_SEARCHES_PER_ANALYSIS"),
+        description="Maximum live Tavily searches per analysis request (default 3)",
+    )
+    tavily_max_auto_text_chars: int = Field(
+        default=15000,
+        validation_alias=AliasChoices("TAVILY_MAX_AUTO_TEXT_CHARS", "EPOCLAIM_TAVILY_MAX_AUTO_TEXT_CHARS"),
+        description="Maximum character length allowed for automatic verification requests (default 15000)",
+    )
+    tavily_budget_timezone: str = Field(
+        default="UTC",
+        validation_alias=AliasChoices("TAVILY_BUDGET_TIMEZONE", "EPOCLAIM_TAVILY_BUDGET_TIMEZONE"),
+        description="Timezone for monthly budget reset calculations (default UTC)",
+    )
     bifrost_endpoint: str = ""
     openai_api_key: str = ""
     anthropic_api_key: str = ""
