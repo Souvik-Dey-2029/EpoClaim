@@ -9,6 +9,8 @@ import * as THREE from "three";
  * - Electric-violet central temporal core with pulsing interior radiance
  * - Subtle inner particle flow / falling starlight representing the decay and flux of claims
  * - Responsive pointer parallax and gentle idle rotation
+ * - Mobile performance-adapted rendering (clamped pixelRatio, optimized particle count & geometry)
+ * - IntersectionObserver to halt rendering when offscreen
  * - Graceful WebGL error detection and static transparent PNG fallback
  */
 
@@ -19,6 +21,8 @@ export function TemporalHourglass3D() {
   useEffect(() => {
     const container = containerRef.current;
     if (!container) return;
+
+    const isMobile = window.innerWidth <= 768;
 
     // Check prefers-reduced-motion
     const mediaQuery = window.matchMedia("(prefers-reduced-motion: reduce)");
@@ -31,20 +35,20 @@ export function TemporalHourglass3D() {
     // Scene & Camera
     const scene = new THREE.Scene();
     const camera = new THREE.PerspectiveCamera(36, 1, 0.1, 100);
-    camera.position.set(0, 0, 6.4); // Enhanced scale (~22% larger rendered projection)
+    camera.position.set(0, 0, isMobile ? 6.8 : 6.4);
 
     let renderer: THREE.WebGLRenderer;
     try {
       renderer = new THREE.WebGLRenderer({
         alpha: true,
-        antialias: true,
-        powerPreference: "high-performance",
+        antialias: !isMobile, // Disable MSAA on mobile to conserve GPU fillrate
+        powerPreference: isMobile ? "default" : "high-performance",
       });
-      renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+      // Clamp pixelRatio: 1 on mobile, up to 2 on desktop
+      renderer.setPixelRatio(isMobile ? 1 : Math.min(window.devicePixelRatio || 1, 2));
       renderer.toneMapping = THREE.ACESFilmicToneMapping;
       renderer.toneMappingExposure = 1.2;
     } catch {
-      // Defer state update outside of synchronous render phase
       queueMicrotask(() => setHasWebGLError(true));
       return;
     }
@@ -63,29 +67,29 @@ export function TemporalHourglass3D() {
     // 1. Emerald Glass Hourglass Vessel (LatheGeometry)
     // ──────────────────────────────────────────────────────────────────────────
     const lathePoints: THREE.Vector2[] = [];
-    const segments = 45;
+    const segments = isMobile ? 26 : 45;
     const height = 2.9;
     const waistRadius = 0.22;
     const bellRadius = 1.12;
 
     for (let i = 0; i <= segments; i++) {
       const t = (i / segments) * 2 - 1; // -1 to +1
-      // Smooth hourglass curvature
       const r = waistRadius + (bellRadius - waistRadius) * Math.pow(Math.abs(t), 1.6);
       lathePoints.push(new THREE.Vector2(r, t * (height * 0.5)));
     }
 
-    const latheGeom = new THREE.LatheGeometry(lathePoints, 48);
+    const latheGeom = new THREE.LatheGeometry(lathePoints, isMobile ? 32 : 48);
     const glassMat = new THREE.MeshPhysicalMaterial({
-      color: new THREE.Color("#0E4631"),
-      emissive: new THREE.Color("#031A10"),
+      color: new THREE.Color(isMobile ? "#1A6B4A" : "#0E4631"),
+      emissive: new THREE.Color(isMobile ? "#0D5C3A" : "#031A10"),
+      emissiveIntensity: isMobile ? 0.65 : 1.0,
       roughness: 0.08,
       metalness: 0.15,
-      transmission: 0.84,
-      thickness: 1.6,
+      transmission: isMobile ? 0.78 : 0.84,
+      thickness: isMobile ? 1.2 : 1.6,
       ior: 1.54,
       transparent: true,
-      opacity: 0.92,
+      opacity: isMobile ? 0.95 : 0.92,
       reflectivity: 0.9,
       side: THREE.DoubleSide,
     });
@@ -103,14 +107,14 @@ export function TemporalHourglass3D() {
     });
 
     // Outer Target Reticle Ring
-    const reticleGeom = new THREE.TorusGeometry(1.48, 0.035, 24, 72);
+    const reticleGeom = new THREE.TorusGeometry(1.48, 0.035, isMobile ? 16 : 24, isMobile ? 48 : 72);
     const reticleMesh = new THREE.Mesh(reticleGeom, goldMat);
     reticleMesh.rotation.x = Math.PI * 0.5;
     rootGroup.add(reticleMesh);
 
     // Dynamic S-Curved Helical Ribbon
     const curvePoints: THREE.Vector3[] = [];
-    const ribbonSegments = 120;
+    const ribbonSegments = isMobile ? 60 : 120;
     for (let i = 0; i <= ribbonSegments; i++) {
       const u = (i / ribbonSegments) * Math.PI * 2.8 - Math.PI * 1.4;
       const rx = Math.sin(u) * (0.95 + 0.35 * Math.abs(u / (Math.PI * 1.4)));
@@ -119,7 +123,7 @@ export function TemporalHourglass3D() {
       curvePoints.push(new THREE.Vector3(rx, ry, rz));
     }
     const ribbonCurve = new THREE.CatmullRomCurve3(curvePoints);
-    const ribbonGeom = new THREE.TubeGeometry(ribbonCurve, 80, 0.065, 12, false);
+    const ribbonGeom = new THREE.TubeGeometry(ribbonCurve, isMobile ? 48 : 80, 0.065, isMobile ? 8 : 12, false);
     const ribbonMesh = new THREE.Mesh(ribbonGeom, goldMat);
     rootGroup.add(ribbonMesh);
 
@@ -139,7 +143,7 @@ export function TemporalHourglass3D() {
     coreGroup.add(starMesh);
 
     // Interior Violet Aura Glow
-    const auraGeom = new THREE.SphereGeometry(0.42, 24, 24);
+    const auraGeom = new THREE.SphereGeometry(0.42, isMobile ? 16 : 24, isMobile ? 16 : 24);
     const auraMat = new THREE.MeshBasicMaterial({
       color: new THREE.Color("#8B5CF6"),
       transparent: true,
@@ -148,76 +152,68 @@ export function TemporalHourglass3D() {
     const auraMesh = new THREE.Mesh(auraGeom, auraMat);
     coreGroup.add(auraMesh);
 
-    // Interior Particle Stream (Simulating temporal flux & grains of proof)
-    const particleCount = 140;
+    // ──────────────────────────────────────────────────────────────────────────
+    // 4. Starlight Internal Particles
+    // ──────────────────────────────────────────────────────────────────────────
+    const particleCount = isMobile ? 45 : 140;
     const particlePositions = new Float32Array(particleCount * 3);
     const particleVelocities = new Float32Array(particleCount);
 
     for (let i = 0; i < particleCount; i++) {
       const i3 = i * 3;
-      const py = (Math.random() * 2 - 1) * 1.25;
-      const maxR = waistRadius + (bellRadius - waistRadius) * Math.pow(Math.abs(py / 1.45), 1.6) * 0.75;
-      const angle = Math.random() * Math.PI * 2;
-      const dist = Math.random() * maxR;
+      const y = (Math.random() * 2 - 1) * (height * 0.45);
+      const normY = (y / (height * 0.5));
+      const maxR = waistRadius + (bellRadius - waistRadius) * Math.pow(Math.abs(normY), 1.6) * 0.75;
+      const theta = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * maxR;
 
-      particlePositions[i3] = Math.cos(angle) * dist;
-      particlePositions[i3 + 1] = py;
-      particlePositions[i3 + 2] = Math.sin(angle) * dist;
-      particleVelocities[i] = 0.008 + Math.random() * 0.014;
+      particlePositions[i3] = Math.cos(theta) * r;
+      particlePositions[i3 + 1] = y;
+      particlePositions[i3 + 2] = Math.sin(theta) * r;
+      particleVelocities[i] = 0.004 + Math.random() * 0.008;
     }
 
     const particleGeom = new THREE.BufferGeometry();
     particleGeom.setAttribute("position", new THREE.BufferAttribute(particlePositions, 3));
+
     const particleMat = new THREE.PointsMaterial({
-      color: new THREE.Color("#F3E8FF"),
-      size: 0.045,
+      color: new THREE.Color("#FDF6B2"),
+      size: isMobile ? 0.035 : 0.045,
       transparent: true,
       opacity: 0.85,
       blending: THREE.AdditiveBlending,
     });
+
     const particleSystem = new THREE.Points(particleGeom, particleMat);
     rootGroup.add(particleSystem);
 
     // ──────────────────────────────────────────────────────────────────────────
-    // 4. Lighting Rig
+    // 5. Cinematic Lighting Environment
     // ──────────────────────────────────────────────────────────────────────────
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.9);
+    const emeraldKeyLight = new THREE.DirectionalLight(new THREE.Color("#10B981"), isMobile ? 3.2 : 2.2);
+    emeraldKeyLight.position.set(4, 5, 3);
+    scene.add(emeraldKeyLight);
+
+    const violetRimLight = new THREE.DirectionalLight(new THREE.Color("#A855F7"), isMobile ? 2.6 : 1.8);
+    violetRimLight.position.set(-4, -3, -3);
+    scene.add(violetRimLight);
+
+    const goldTopLight = new THREE.PointLight(new THREE.Color("#FDE68A"), isMobile ? 2.0 : 1.2, 8);
+    goldTopLight.position.set(0, 3, 1);
+    scene.add(goldTopLight);
+
+    const ambientLight = new THREE.AmbientLight(new THREE.Color("#064E3B"), isMobile ? 1.4 : 0.8);
     scene.add(ambientLight);
 
-    // Raking Key Light (Warm Champagne Highlight)
-    const keyLight = new THREE.DirectionalLight(0xFFF6E5, 3.2);
-    keyLight.position.set(3.5, 4.5, 4);
-    scene.add(keyLight);
-
-    // Emerald Rim Light (Vivid Emerald Edge Definition)
-    const rimLight = new THREE.DirectionalLight(0x2BD28B, 2.2);
-    rimLight.position.set(-4.5, -2, -3);
-    scene.add(rimLight);
-
-    // Front-Bottom Champagne Fill
-    const fillLight = new THREE.DirectionalLight(0xE8D9B9, 1.2);
-    fillLight.position.set(0, -3, 3);
-    scene.add(fillLight);
-
-    // Violet Core Point Light
-    const coreLight = new THREE.PointLight(0xA855F7, 3.8, 5.0);
-    coreLight.position.set(0, 0, 0);
-    scene.add(coreLight);
-
-    // ──────────────────────────────────────────────────────────────────────────
-    // 5. Parallax & Motion Physics
-    // ──────────────────────────────────────────────────────────────────────────
-    let targetRotX = 0.12;
-    let targetRotY = -0.25;
-    let currentRotX = 0.12;
-    let currentRotY = -0.25;
+    // Smooth Pointer Parallax tracking
+    let targetRotY = 0;
+    let targetRotX = 0;
+    let currentRotX = 0;
+    let currentRotY = 0;
 
     const handlePointerMove = (e: MouseEvent) => {
-      const rect = container.getBoundingClientRect();
-      const nx = ((e.clientX - rect.left) / rect.width) * 2 - 1;
-      const ny = -(((e.clientY - rect.top) / rect.height) * 2 - 1);
-
-      // Subtle responsive parallax
+      const nx = (e.clientX / window.innerWidth) * 2 - 1;
+      const ny = (e.clientY / window.innerHeight) * 2 - 1;
       targetRotY = nx * 0.45;
       targetRotX = -ny * 0.35 + 0.1;
     };
@@ -239,12 +235,17 @@ export function TemporalHourglass3D() {
     resizeObserver.observe(container);
     updateSize();
 
-    // Visibility Handling
+    // IntersectionObserver & Visibility Handling to pause when offscreen
     let isVisible = true;
     const handleVisibility = () => {
       isVisible = !document.hidden;
     };
     document.addEventListener("visibilitychange", handleVisibility);
+
+    const io = new IntersectionObserver(([entry]) => {
+      isVisible = entry.isIntersecting && !document.hidden;
+    }, { threshold: 0.1 });
+    io.observe(container);
 
     // ──────────────────────────────────────────────────────────────────────────
     // 6. Animation Loop
@@ -268,7 +269,7 @@ export function TemporalHourglass3D() {
         currentRotY += (targetRotY - currentRotY) * 0.06;
 
         rootGroup.rotation.x = currentRotX + Math.sin(elapsed * 0.8) * 0.04;
-        rootGroup.rotation.y = currentRotY + elapsed * 0.15; // Slow deliberate turntable
+        rootGroup.rotation.y = currentRotY + elapsed * 0.15; // Slow turntable
 
         // Core star counter-rotation & breath pulse
         starMesh.rotation.y = -elapsed * 0.9;
@@ -301,6 +302,7 @@ export function TemporalHourglass3D() {
       mediaQuery.removeEventListener("change", handleMotionChange);
       document.removeEventListener("visibilitychange", handleVisibility);
       resizeObserver.disconnect();
+      io.disconnect();
 
       if (container.contains(domElement)) {
         container.removeChild(domElement);
