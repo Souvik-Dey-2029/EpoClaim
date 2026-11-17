@@ -242,10 +242,14 @@ class GeneralSemanticVerifier:
             if ret_match:
                 new_subj = ret_match.group(1).strip()
                 title_phrase = ret_match.group(2).strip()
-                # If claim asserts a different person for that title phrase
-                if claim_entity and claim_entity.lower() not in new_subj:
-                    title_tokens = _clean_tokens(title_phrase)
-                    if len(title_tokens.intersection(c_tokens)) >= 1:
+                title_tokens = _clean_tokens(title_phrase)
+                role_keywords = {"ceo", "cto", "cfo", "coo", "president", "director", "chair", "chairman", "chairwoman", "leader", "founder", "interim", "head", "chief", "minister"}
+                # Collision only applies if the claim asserts a role or position matching the title
+                shared_roles = title_tokens.intersection(c_tokens).intersection(role_keywords)
+                if shared_roles:
+                    c_claimant = (claim_entity or "").lower()
+                    c_val = (claim_value or "").lower()
+                    if (c_claimant and c_claimant not in new_subj) or (c_val and c_val not in new_subj):
                         return 0.05, 0.90, 0.05
 
         # 5. Negation polarity collision

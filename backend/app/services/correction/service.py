@@ -306,55 +306,55 @@ class AnswerCorrectionService:
                     "fallback_reason": unit_fallback_reason or ("LLM correction disabled or unattempted" if not can_attempt_llm else "Proposition unit absent or ineligible"),
                 })
 
-            # Determine display text for deterministic fallback
-            is_pseudo = (pid == f"prop_{claim.claim_id}" and (not claim.propositions or len(claim.propositions) <= 1))
-            display_text = claim.normalized_text if is_pseudo else prop_text
+                # Determine display text for deterministic fallback
+                is_pseudo = (pid == f"prop_{claim.claim_id}" and (not claim.propositions or len(claim.propositions) <= 1))
+                display_text = claim.normalized_text if is_pseudo else prop_text
 
-            if v == VerificationVerdict.SUPPORTED:
-                c_nums = [get_or_create_citation(all_evidence_map[eid]) for eid in wl[:2] if eid in all_evidence_map]
-                cite_str = "".join(f" [{n}]" for n in c_nums) if c_nums else ""
-                corrected_sentences.append(f"{display_text}{cite_str}.")
-                deltas.append(
-                    CorrectionDelta(
-                        claim_id=claim.claim_id,
-                        proposition_id=None if is_pseudo else prop.proposition_id,
-                        change_type="RETAINED_SUPPORTED",
-                        original_text=claim.original_text if is_pseudo else prop.original_text_span,
-                        explanation="Verified and retained with supporting evidence.",
+                if v == VerificationVerdict.SUPPORTED:
+                    c_nums = [get_or_create_citation(all_evidence_map[eid]) for eid in wl[:2] if eid in all_evidence_map]
+                    cite_str = "".join(f" [{n}]" for n in c_nums) if c_nums else ""
+                    corrected_sentences.append(f"{display_text}{cite_str}.")
+                    deltas.append(
+                        CorrectionDelta(
+                            claim_id=claim.claim_id,
+                            proposition_id=None if is_pseudo else prop.proposition_id,
+                            change_type="RETAINED_SUPPORTED",
+                            original_text=claim.original_text if is_pseudo else prop.original_text_span,
+                            explanation="Verified and retained with supporting evidence.",
+                        )
                     )
-                )
-            elif v in {VerificationVerdict.OUTDATED, VerificationVerdict.CONTRADICTED}:
-                contra_ev = all_evidence_map.get(wl[0]) if wl else None
-                c_str = ""
-                if contra_ev:
-                    c_num = get_or_create_citation(contra_ev)
-                    c_str = f" [{c_num}]"
-                    snippet = contra_ev.citation_text.strip().rstrip(".")
-                    corrected_sentences.append(f"Rather than '{display_text}', reliable evidence confirms that {snippet}{c_str}.")
-                else:
-                    corrected_sentences.append(f"The statement '{display_text}' is refuted by evidence.")
-                deltas.append(
-                    CorrectionDelta(
-                        claim_id=claim.claim_id,
-                        proposition_id=None if is_pseudo else prop.proposition_id,
-                        change_type="CORRECTED_OUTDATED" if v == VerificationVerdict.OUTDATED else "REFUTED_CONTRADICTED",
-                        original_text=claim.original_text if is_pseudo else prop.original_text_span,
-                        explanation="Corrected based on contradictory/superseding evidence.",
+                elif v in {VerificationVerdict.OUTDATED, VerificationVerdict.CONTRADICTED}:
+                    contra_ev = all_evidence_map.get(wl[0]) if wl else None
+                    c_str = ""
+                    if contra_ev:
+                        c_num = get_or_create_citation(contra_ev)
+                        c_str = f" [{c_num}]"
+                        snippet = contra_ev.citation_text.strip().rstrip(".")
+                        corrected_sentences.append(f"Rather than '{display_text}', reliable evidence confirms that {snippet}{c_str}.")
+                    else:
+                        corrected_sentences.append(f"The statement '{display_text}' is refuted by evidence.")
+                    deltas.append(
+                        CorrectionDelta(
+                            claim_id=claim.claim_id,
+                            proposition_id=None if is_pseudo else prop.proposition_id,
+                            change_type="CORRECTED_OUTDATED" if v == VerificationVerdict.OUTDATED else "REFUTED_CONTRADICTED",
+                            original_text=claim.original_text if is_pseudo else prop.original_text_span,
+                            explanation="Corrected based on contradictory/superseding evidence.",
+                        )
                     )
-                )
-            else: # INSUFFICIENT / UNVERIFIED
-                unresolved.append(display_text)
-                clean_disp = display_text.strip().rstrip(".,;")
-                unverified_propositions.append(clean_disp)
-                deltas.append(
-                    CorrectionDelta(
-                        claim_id=claim.claim_id,
-                        proposition_id=None if is_pseudo else prop.proposition_id,
-                        change_type="QUALIFIED_UNVERIFIED",
-                        original_text=claim.original_text if is_pseudo else prop.original_text_span,
-                        explanation="Unverified by available evidence; explicitly qualified to avoid hallucination.",
+                else: # INSUFFICIENT / UNVERIFIED
+                    unresolved.append(display_text)
+                    clean_disp = display_text.strip().rstrip(".,;")
+                    unverified_propositions.append(clean_disp)
+                    deltas.append(
+                        CorrectionDelta(
+                            claim_id=claim.claim_id,
+                            proposition_id=None if is_pseudo else prop.proposition_id,
+                            change_type="QUALIFIED_UNVERIFIED",
+                            original_text=claim.original_text if is_pseudo else prop.original_text_span,
+                            explanation="Unverified by available evidence; explicitly qualified to avoid hallucination.",
+                        )
                     )
-                )
 
         # Synthesize unresolved propositions cleanly without robotic sentence repetition
         if len(unverified_propositions) == 1:

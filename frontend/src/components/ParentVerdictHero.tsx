@@ -9,11 +9,17 @@ export function ParentVerdictHero({ report }: { report: FinalReport }) {
   } else if (report.outdated_claims > 0 && report.supported_claims === 0) {
     overallVerdict = "OUTDATED";
   } else if (
-    (report.supported_claims > 0 && (report.outdated_claims > 0 || report.contradicted_claims > 0 || report.insufficient_evidence_claims > 0)) ||
+    (report.supported_claims > 0 &&
+      (report.outdated_claims > 0 ||
+        report.contradicted_claims > 0 ||
+        report.insufficient_evidence_claims > 0)) ||
     (report.partially_supported_claims && report.partially_supported_claims > 0)
   ) {
     overallVerdict = "PARTIALLY_SUPPORTED";
-  } else if (report.insufficient_evidence_claims === report.total_claims && report.total_claims > 0) {
+  } else if (
+    report.insufficient_evidence_claims === report.total_claims &&
+    report.total_claims > 0
+  ) {
     overallVerdict = "INSUFFICIENT_EVIDENCE";
   }
 
@@ -25,61 +31,67 @@ export function ParentVerdictHero({ report }: { report: FinalReport }) {
   const insPct = Math.round((report.insufficient_evidence_claims / total) * 100);
 
   return (
-    <section className="parent-verdict-hero neo-panel">
-      <div className="hero-top-bar">
-        <div className="hero-eyebrow">
-          <span className="live-dot" />
-          <span className="mono-label">VERIFICATION REPORT ID: {report.report_id}</span>
+    <section className="report-verdict-editorial-hero" aria-label="Investigation verdict summary">
+      {/* Top Metadata Strip */}
+      <div className="verdict-meta-bar">
+        <div className="meta-identifier">
+          <span className="meta-k">Report</span>
+          <span className="meta-v font-mono">{report.report_id}</span>
         </div>
-        <div className="hero-timestamp mono-label">
-          SYNTHESIS TIMESTAMP: {report.execution_metadata?.timestamp || "RECORDED"}
+        <div className="meta-timestamp font-mono">
+          {report.execution_metadata?.timestamp || "Recorded audit"}
         </div>
       </div>
 
-      <div className="hero-main-grid">
-        <div className="verdict-banner">
-          <div className="verdict-tagline">PARENT LEVEL SYNTHESIS</div>
-          <div className="verdict-badge-wrapper">
-            <VerdictPill verdict={overallVerdict} size="xl" />
+      {/* Main Grid: Headline Verdict & Quantitative Dispersion */}
+      <div className="verdict-main-editorial-grid">
+        {/* Left Column: Clear Synthesis Verdict */}
+        <div className="verdict-synthesis-col">
+          <div className="verdict-badge-line">
+            <VerdictPill verdict={overallVerdict} size="lg" />
           </div>
-          <p className="assessment-narrative">
+          <p className="verdict-narrative-prose">
             {report.overall_assessment}
           </p>
         </div>
 
-        <div className="hero-telemetry-cluster">
-          <div className="telemetry-box neo-box">
-            <span className="mono-num">{report.total_claims}</span>
-            <span className="mono-legend">ATOMIC PROPOSITIONS</span>
+        {/* Right Column: Claims Metric Dispersion */}
+        <div className="verdict-metrics-col">
+          <div className="metrics-summary-row">
+            <div className="metric-stat-item">
+              <span className="metric-stat-num">{report.total_claims}</span>
+              <span className="metric-stat-label">
+                {report.total_claims === 1 ? "Atomic Claim" : "Atomic Claims"}
+              </span>
+            </div>
+            <div className="metric-stat-item">
+              <span className="metric-stat-num val-outdated">{report.outdated_claims}</span>
+              <span className="metric-stat-label">Outdated</span>
+            </div>
+            <div className="metric-stat-item">
+              <span className="metric-stat-num val-supported">{report.supported_claims}</span>
+              <span className="metric-stat-label">Supported</span>
+            </div>
           </div>
 
-          <div className="telemetry-breakdown-card neo-box">
-            <div className="breakdown-title mono-label">PROPOSITION VERDICT DISPERSION</div>
-            <div className="breakdown-bar">
-              {supPct > 0 && <div className="bar-seg sup" style={{ width: `${supPct}%` }} title={`Supported: ${supPct}%`} />}
-              {outPct > 0 && <div className="bar-seg out" style={{ width: `${outPct}%` }} title={`Outdated: ${outPct}%`} />}
-              {conPct > 0 && <div className="bar-seg con" style={{ width: `${conPct}%` }} title={`Contradicted: ${conPct}%`} />}
-              {insPct > 0 && <div className="bar-seg ins" style={{ width: `${insPct}%` }} title={`Insufficient: ${insPct}%`} />}
-            </div>
+          {/* Visual Proportion Bar */}
+          <div className="dispersion-proportion-track" aria-hidden="true">
+            {supPct > 0 && <div className="bar-slice is-sup" style={{ width: `${supPct}%` }} title={`Supported: ${supPct}%`} />}
+            {outPct > 0 && <div className="bar-slice is-out" style={{ width: `${outPct}%` }} title={`Outdated: ${outPct}%`} />}
+            {conPct > 0 && <div className="bar-slice is-con" style={{ width: `${conPct}%` }} title={`Contradicted: ${conPct}%`} />}
+            {insPct > 0 && <div className="bar-slice is-ins" style={{ width: `${insPct}%` }} title={`Unconfirmed: ${insPct}%`} />}
+          </div>
 
-            <div className="breakdown-legend-grid">
-              <div className="legend-item">
-                <span className="dot dot-sup" />
-                <span className="legend-txt">Supported ({report.supported_claims})</span>
-              </div>
-              <div className="legend-item">
-                <span className="dot dot-out" />
-                <span className="legend-txt">Outdated ({report.outdated_claims})</span>
-              </div>
-              <div className="legend-item">
-                <span className="dot dot-con" />
-                <span className="legend-txt">Contradicted ({report.contradicted_claims})</span>
-              </div>
-              <div className="legend-item">
-                <span className="dot dot-ins" />
-                <span className="legend-txt">Unconfirmed ({report.insufficient_evidence_claims})</span>
-              </div>
-            </div>
+          {/* Clean Understated Legend */}
+          <div className="dispersion-legend-row">
+            <span className="legend-tag sup">Supported ({report.supported_claims})</span>
+            <span className="legend-tag out">Outdated ({report.outdated_claims})</span>
+            {report.contradicted_claims > 0 && (
+              <span className="legend-tag con">Contradicted ({report.contradicted_claims})</span>
+            )}
+            {report.insufficient_evidence_claims > 0 && (
+              <span className="legend-tag ins">Unconfirmed ({report.insufficient_evidence_claims})</span>
+            )}
           </div>
         </div>
       </div>

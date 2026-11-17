@@ -297,11 +297,11 @@ def test_cache_expiration_triggers_new_request(search_client, cache):
     asyncio.run(_run())
 
 
-# 14. Credit cap blocks requests at 500
+# 14. Credit cap blocks requests at 5000
 def test_credit_cap_blocks_at_limit(ledger, cache):
-    # Set consumed credits to 500 directly in ledger
+    # Set consumed credits to 5000 directly in ledger
     with ledger._get_connection() as conn:
-        conn.execute("UPDATE tavily_budget_config SET consumed_credits = 500 WHERE id = 1")
+        conn.execute("UPDATE tavily_budget_config SET consumed_credits = 5000 WHERE id = 1")
         conn.commit()
 
     async def _run():
@@ -309,40 +309,43 @@ def test_credit_cap_blocks_at_limit(ledger, cache):
         res = await client.search("exceed cap query")
         assert res["source"] == "none"
         assert "budget exceeded" in res["error"].lower()
-        assert ledger.get_ledger_status()["consumed_credits"] == 500
+        assert ledger.get_ledger_status()["consumed_credits"] == 5000
 
     asyncio.run(_run())
 
 
-# 15. Manual increase from 500 to 600
+# 15. Manual increase from 5000 to 5100
 def test_manual_increase_budget(ledger):
-    success, msg = ledger.manual_increase_budget(600, reason="Approved for testing milestone 2")
+    success, msg = ledger.manual_increase_budget(5100, reason="Approved for testing milestone 2")
     assert success is True
     status = ledger.get_ledger_status()
-    assert status["budget_cap"] == 600
+    assert status["budget_cap"] == 5100
 
     # Audit log check
     logs = ledger.get_audit_logs()
     assert len(logs) >= 1
     # Check that entry exists in audit history
-    assert any(entry["new_cap"] == 600 for entry in logs)
+    assert any(entry["new_cap"] == 5100 for entry in logs)
 
 
 def test_budget_increase_validation_rules(ledger):
-    # Arbitrary jump (e.g. 500 -> 700) must be rejected
-    success, msg = ledger.manual_increase_budget(700, reason="Arbitrary jump")
+    # Arbitrary jump (e.g. 5000 -> 5300) must be rejected
+    success, msg = ledger.manual_increase_budget(5300, reason="Arbitrary jump")
     assert success is False
     assert "strictly exactly" in msg.lower() or "increment" in msg.lower()
 
-    # Step up cleanly to 1000
-    assert ledger.manual_increase_budget(600, reason="step 1")[0] is True
-    assert ledger.manual_increase_budget(700, reason="step 2")[0] is True
-    assert ledger.manual_increase_budget(800, reason="step 3")[0] is True
-    assert ledger.manual_increase_budget(900, reason="step 4")[0] is True
-    assert ledger.manual_increase_budget(1000, reason="step 5")[0] is True
+    # Step up cleanly to 5500
+    assert ledger.manual_increase_budget(5100, reason="step 1")[0] is True
+    assert ledger.manual_increase_budget(5200, reason="step 2")[0] is True
+    assert ledger.manual_increase_budget(5300, reason="step 3")[0] is True
+    assert ledger.manual_increase_budget(5400, reason="step 4")[0] is True
+    assert ledger.manual_increase_budget(5500, reason="step 5")[0] is True
 
-    # Increase above 1,000 must be rejected
-    success_over, msg_over = ledger.manual_increase_budget(1100, reason="Exceed max cap")
+    # Increase above MAX_ACCOUNT_BUDGET (25,000) must be rejected
+    with ledger._get_connection() as conn:
+        conn.execute("UPDATE tavily_budget_config SET budget_cap = 25000 WHERE id = 1")
+        conn.commit()
+    success_over, msg_over = ledger.manual_increase_budget(25100, reason="Exceed max cap")
     assert success_over is False
     assert "hard ceiling" in msg_over.lower() or "maximum allowed" in msg_over.lower()
 
@@ -353,7 +356,7 @@ def test_public_budget_increase_endpoint_removed():
 
     client = TestClient(app)
     # The endpoint POST /api/v1/tavily/budget/increase must return 404 (or 405 Method Not Allowed)
-    resp = client.post("/api/v1/tavily/budget/increase", json={"new_budget_cap": 600, "reason": "Test"})
+    resp = client.post("/api/v1/tavily/budget/increase", json={"new_budget_cap": 5100, "reason": "Test"})
     assert resp.status_code in {404, 405}
 
     # Ensure GET /api/v1/tavily/status is still accessible
@@ -366,10 +369,10 @@ def test_public_budget_increase_endpoint_removed():
 # 16. Automatic increase is impossible (no auto-bumping; reject decreases below consumed)
 def test_budget_cannot_decrease_below_consumed(ledger):
     with ledger._get_connection() as conn:
-        conn.execute("UPDATE tavily_budget_config SET budget_cap = 600, consumed_credits = 550 WHERE id = 1")
+        conn.execute("UPDATE tavily_budget_config SET budget_cap = 5600, consumed_credits = 5550 WHERE id = 1")
         conn.commit()
 
-    success, msg = ledger.manual_increase_budget(500, reason="Illegal decrease")
+    success, msg = ledger.manual_increase_budget(5500, reason="Illegal decrease")
     assert success is False
     assert "below committed credits" in msg.lower() or "below already consumed" in msg.lower()
 
@@ -377,9 +380,9 @@ def test_budget_cannot_decrease_below_consumed(ledger):
 # 17. Backend restart preserves ledger state
 def test_backend_restart_preserves_ledger(temp_db):
     ledger1 = TavilyCreditLedger(db_path=temp_db)
-    # Step up cleanly 500 -> 600 -> 700
-    ledger1.manual_increase_budget(600, reason="Pre-restart allocation step 1")
-    ledger1.manual_increase_budget(700, reason="Pre-restart allocation step 2")
+    # Step up cleanly 5000 -> 5100 -> 5200
+    ledger1.manual_increase_budget(5100, reason="Pre-restart allocation step 1")
+    ledger1.manual_increase_budget(5200, reason="Pre-restart allocation step 2")
     with ledger1._get_connection() as conn:
         conn.execute("UPDATE tavily_budget_config SET consumed_credits = 120 WHERE id = 1")
         conn.commit()
@@ -387,9 +390,9 @@ def test_backend_restart_preserves_ledger(temp_db):
     # Re-instantiate as if server restarted
     ledger2 = TavilyCreditLedger(db_path=temp_db)
     status = ledger2.get_ledger_status()
-    assert status["budget_cap"] == 700
+    assert status["budget_cap"] == 5200
     assert status["consumed_credits"] == 120
-    assert status["available_credits"] == 580
+    assert status["available_credits"] == 5080
 
 
 # 18. Concurrent requests cannot exceed cap

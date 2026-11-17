@@ -157,7 +157,7 @@ class EpoClaim:
                 client.close()
 
     def get_tavily_status(self) -> Dict[str, Any]:
-        """Retrieve Tavily credit ledger and search status."""
+        """Retrieve Tavily credit ledger and search status (default 5,000 credit budget)."""
         url = f"{self.base_url}/api/v1/tavily/status"
         client = self._custom_client or httpx.Client(timeout=self.timeout)
 

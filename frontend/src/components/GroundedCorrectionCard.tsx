@@ -9,6 +9,7 @@ export function GroundedCorrectionCard({
   originalInput: string;
 }) {
   const [viewMode, setViewMode] = useState<"side-by-side" | "diff">("side-by-side");
+  const [copied, setCopied] = useState(false);
 
   const formattedDate = new Date(correction.as_of_timestamp).toLocaleDateString(undefined, {
     year: "numeric",
@@ -16,28 +17,51 @@ export function GroundedCorrectionCard({
     day: "numeric",
   });
 
+  const handleCopy = () => {
+    navigator.clipboard.writeText(correction.corrected_text);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
   return (
-    <section className="grounded-correction-card neo-panel">
-      <div className="correction-header">
-        <div className="correction-title-group">
-          <div className="status-indicator-badge">
-            <span className="purple-sparkle">✦</span>
-            <span className="mono-label">EVIDENCE-GROUNDED FACTUAL RECONCILIATION</span>
-          </div>
-          <h2 className="correction-headline">Corrected Synthesis & Temporal Anchor</h2>
+    <section className="correction-editorial-card" aria-label="Grounded revised answer">
+      {/* Editorial Header */}
+      <div className="correction-top-row">
+        <div className="correction-lead-group">
+          <span className="correction-context-tag">REVISED SYNTHESIS</span>
+          <h2 className="correction-main-heading">Evidence-grounded revision</h2>
         </div>
 
-        <div className="correction-actions">
-          <span className="as-of-pill mono-label">REFERENCE ANCHOR: {formattedDate}</span>
-          <div className="mode-toggle neo-toggle">
+        <div className="correction-action-strip">
+          <span className="anchor-date-label">As of {formattedDate}</span>
+
+          <button
+            type="button"
+            className="copy-revised-action-btn"
+            onClick={handleCopy}
+            title="Copy corrected answer to clipboard"
+          >
+            <span className="copy-icon" aria-hidden="true">
+              {copied ? "✓" : "📋"}
+            </span>
+            <span>{copied ? "Copied" : "Copy answer"}</span>
+          </button>
+
+          <div className="view-mode-segmented-control" role="tablist">
             <button
-              className={`toggle-btn ${viewMode === "side-by-side" ? "active" : ""}`}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === "side-by-side"}
+              className={`mode-btn ${viewMode === "side-by-side" ? "is-active" : ""}`}
               onClick={() => setViewMode("side-by-side")}
             >
               Side-by-Side
             </button>
             <button
-              className={`toggle-btn ${viewMode === "diff" ? "active" : ""}`}
+              type="button"
+              role="tab"
+              aria-selected={viewMode === "diff"}
+              className={`mode-btn ${viewMode === "diff" ? "is-active" : ""}`}
               onClick={() => setViewMode("diff")}
             >
               Itemized Deltas
@@ -46,87 +70,86 @@ export function GroundedCorrectionCard({
         </div>
       </div>
 
+      {/* Comparison View */}
       {viewMode === "side-by-side" ? (
-        <div className="comparison-grid">
-          <div className="comparison-column original-column neo-box">
-            <div className="column-banner mono-label">ORIGINAL ASSERTED RESPONSE</div>
-            <div className="column-content prose-text">{originalInput}</div>
+        <div className="revised-comparison-grid">
+          {/* Original Column */}
+          <div className="comparison-pane original-pane">
+            <div className="pane-lead-label">Original assertion</div>
+            <div className="pane-text-body">{originalInput}</div>
           </div>
 
-          <div className="comparison-divider">
-            <span className="arrow-icon">➔</span>
+          <div className="comparison-center-rule" aria-hidden="true">
+            <span className="rule-arrow">→</span>
           </div>
 
-          <div className="comparison-column corrected-column neo-box">
-            <div className="column-banner mono-label banner-highlight">
-              EVIDENCE-ALIGNED REVISED ANSWER
-            </div>
-            <div className="column-content prose-text corrected-prose">
+          {/* Corrected Column */}
+          <div className="comparison-pane corrected-pane">
+            <div className="pane-lead-label corrected-label">Revised &amp; verified answer</div>
+            <div className="pane-text-body corrected-body">
               {correction.corrected_text}
             </div>
           </div>
         </div>
       ) : (
-        <div className="diff-view-panel neo-box">
-          <div className="diff-header mono-label">
-            PROPOSITION MODIFICATION LEDGER ({correction.deltas?.length || 0} DELTAS)
+        <div className="deltas-ledger-panel">
+          <div className="deltas-ledger-title">
+            Proposition modifications ({correction.deltas?.length || 0})
           </div>
 
           {correction.deltas && correction.deltas.length > 0 ? (
-            <div className="deltas-list">
+            <div className="deltas-stack">
               {correction.deltas.map((delta, idx) => {
                 const isRetained = delta.change_type === "RETAINED_SUPPORTED";
                 const isQualified = delta.change_type === "QUALIFIED_UNVERIFIED";
                 return (
                   <div
                     key={idx}
-                    className={`delta-row ${
-                      isRetained ? "delta-retained" : isQualified ? "delta-qualified" : "delta-replaced"
+                    className={`delta-item ${
+                      isRetained ? "is-preserved" : isQualified ? "is-qualified" : "is-superseded"
                     }`}
                   >
-                    <div className="delta-type-pill mono-label">
-                      {isRetained ? "✓ PRESERVED" : isQualified ? "⚠ QUALIFIED" : "✗ SUPERSEDED"}
+                    <div className="delta-status-marker">
+                      {isRetained ? "Preserved" : isQualified ? "Qualified" : "Superseded"}
                     </div>
-                    <div className="delta-detail">
-                      <div className="delta-original">
-                        <span className="quote-mark">“</span>
-                        {delta.original_text}
-                        <span className="quote-mark">”</span>
+                    <div className="delta-content-col">
+                      <div className="delta-original-quote">
+                        “{delta.original_text}”
                       </div>
-                      <div className="delta-explanation">{delta.explanation}</div>
+                      <div className="delta-reasoning">{delta.explanation}</div>
                     </div>
                   </div>
                 );
               })}
             </div>
           ) : (
-            <div className="empty-deltas mono-label">No granular deltas recorded for this claim.</div>
+            <div className="empty-deltas-note">No proposition changes required.</div>
           )}
         </div>
       )}
 
-      {/* Citations footer */}
+      {/* Citations Footer */}
       {correction.citations && correction.citations.length > 0 && (
         <div className="correction-citations-bar">
-          <span className="citations-label mono-label">GROUNDING CITATIONS:</span>
-          <div className="citations-cluster">
+          <span className="citations-label">Sources</span>
+          <div className="citations-list-cluster">
             {correction.citations.map((c) => (
               <a
                 key={c.citation_number}
                 href={c.source_url || "#"}
                 target="_blank"
                 rel="noreferrer"
-                className="citation-link neo-link"
+                className="editorial-citation-chip"
                 title={c.snippet}
               >
-                <span className="cite-num">[{c.citation_number}]</span>
-                <span className="cite-title">{c.source_title}</span>
+                <span className="cite-index">[{c.citation_number}]</span>
+                <span className="cite-title-text">{c.source_title}</span>
                 {c.published_date && (
-                  <span className="cite-date">
-                    ({new Date(c.published_date).toLocaleDateString()})
+                  <span className="cite-date-text">
+                    &bull; {new Date(c.published_date).toLocaleDateString()}
                   </span>
                 )}
-                <span className="external-arrow">↗</span>
+                <span className="cite-arrow-glyph" aria-hidden="true">↗</span>
               </a>
             ))}
           </div>

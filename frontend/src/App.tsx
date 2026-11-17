@@ -1,13 +1,17 @@
 import { useState, useEffect, useRef } from "react";
-import { checkHealth, analyzeResponse, runBenchmark, getTavilyStatus } from "./api";
+import { checkHealth, analyzeResponse, getAnalysis, runBenchmark, getTavilyStatus } from "./api";
 import type { FinalReport, ClaimAnalysisDetail, BenchmarkReport, TavilyStatus } from "./types";
-import { VelvetFabricBackground } from "./components/VelvetFabricBackground";
-import { EpoClaimLogo } from "./components/EpoClaimLogo";
+import { CinematicAuroraBackground } from "./components/CinematicAuroraBackground";
+import { WorkspaceBackground } from "./components/WorkspaceBackground";
+import { LandingHeader } from "./components/LandingHeader";
+import { WorkspaceHeader } from "./components/WorkspaceHeader";
 import { LandingHero } from "./components/LandingHero";
 import { AnalyzerWorkspace } from "./components/AnalyzerWorkspace";
 import { BenchmarkSuiteView } from "./components/BenchmarkSuiteView";
 import { DeveloperHubView } from "./components/DeveloperHubView";
 import { EngineStartupModal } from "./components/EngineStartupModal";
+import { ChromeExtensionModal } from "./components/ChromeExtensionModal";
+import { CHROME_EXTENSION_STORE_URL } from "./config";
 
 const PRESET_SCENARIOS = [
   {
@@ -36,7 +40,7 @@ const PRESET_SCENARIOS = [
   },
 ];
 
-type AppRoute = "landing" | "analyzer" | "benchmark" | "developers";
+export type AppRoute = "landing" | "analyzer" | "benchmark" | "developers";
 
 function getRouteFromPath(pathname: string): AppRoute {
   const clean = pathname.toLowerCase().replace(/\/+$/, "");
@@ -70,6 +74,9 @@ export function App() {
   const [benchmarking, setBenchmarking] = useState(false);
   const [benchmarkResult, setBenchmarkResult] = useState<BenchmarkReport | null>(null);
   const [benchError, setBenchError] = useState<string | null>(null);
+
+  // Chrome Extension Modal state
+  const [isExtensionModalOpen, setIsExtensionModalOpen] = useState(false);
 
   // Handle browser popstate (back / forward navigation)
   useEffect(() => {
@@ -119,8 +126,7 @@ export function App() {
   useEffect(() => {
     let isMounted = true;
 
-    // Only query backend health immediately if user landed directly on /analyzer or /benchmark.
-    // When visiting the landing page (/), do not wake the backend unnecessarily.
+    // Query backend health immediately if user is on /analyzer or /benchmark or after page load
     const shouldCheckImmediately =
       window.location.pathname.startsWith("/analyzer") ||
       window.location.pathname.startsWith("/benchmark");
@@ -153,6 +159,8 @@ export function App() {
       performHealthCheck();
     } else {
       setHealthChecking(false);
+      // Soft background query for landing page status indicators
+      performHealthCheck();
     }
 
     // Polling interval (every 30 seconds) to detect engine status changes
@@ -169,6 +177,25 @@ export function App() {
         if (data && isMounted) setBenchmarkResult(data);
       })
       .catch(() => {});
+
+    // Inspect URL query parameters for direct report inspection from Chrome Extension
+    if (typeof window !== "undefined") {
+      const urlParams = new URLSearchParams(window.location.search);
+      const reportIdParam = urlParams.get("report_id");
+      if (reportIdParam) {
+        getAnalysis(reportIdParam)
+          .then((loadedReport) => {
+            if (loadedReport && isMounted) {
+              setReport(loadedReport);
+              setCurrentRoute("analyzer");
+              if (loadedReport.claim_results && loadedReport.claim_results.length > 0) {
+                setSelectedClaim(loadedReport.claim_results[0]);
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    }
 
     return () => {
       isMounted = false;
@@ -213,90 +240,45 @@ export function App() {
     }
   };
 
+  const isLanding = currentRoute === "landing";
+
   return (
-    <div className={`epoclaim-app ${currentRoute === "developers" ? "route-developers" : `route-${currentRoute}`}`}>
-      {/* Velvet / Heavy Satin Textile Background with Directional Fold Sheen */}
-      <VelvetFabricBackground />
+    <div
+      className={`epoclaim-product-experience ${
+        isLanding ? "experience-landing" : "experience-workspace"
+      } route-${currentRoute}`}
+    >
+      {/* ──────────────────────────────────────────────────────────────────────────
+          TWO DISTINCT VISUAL BACKGROUNDS:
+          Landing: Immersive Dark Emerald Aurora Environment
+          Workspace: Deep Charcoal Technical Canvas (NO Aurora)
+          ────────────────────────────────────────────────────────────────────────── */}
+      {isLanding ? <CinematicAuroraBackground /> : <WorkspaceBackground />}
 
-      <div className="app-foreground-layout">
-        {/* Consistent Global Glass Header across all routes */}
-        <header className="global-header">
-          <div
-            className="header-brand-container"
-            onClick={() => navigateTo("landing")}
-            style={{ cursor: "pointer" }}
-            title="EpoClaim — Temporal Verification Engine"
-          >
-            <EpoClaimLogo size={58} showWordmark={true} />
-          </div>
-
-          {/* Centered Glass Capsule Navigation */}
-          <nav className="glass-nav-pill">
-            <button
-              className={`nav-link ${currentRoute === "landing" ? "active" : ""}`}
-              onClick={() => navigateTo("landing")}
-            >
-              Overview
-            </button>
-            <button
-              className={`nav-link ${currentRoute === "analyzer" ? "active" : ""}`}
-              onClick={() => navigateTo("analyzer")}
-            >
-              Answer Analyzer
-            </button>
-            <button
-              className={`nav-link ${currentRoute === "benchmark" ? "active" : ""}`}
-              onClick={() => navigateTo("benchmark")}
-            >
-              Benchmark Suite
-            </button>
-            <button
-              className={`nav-link ${currentRoute === "developers" ? "active" : ""}`}
-              onClick={() => navigateTo("developers")}
-            >
-              Developers
-            </button>
-            <a
-              href="https://github.com/Souvik-Dey-2029/EpoClaim"
-              target="_blank"
-              rel="noreferrer"
-              className="nav-link nav-link-external"
-            >
-              Documentation ↗
-            </a>
-          </nav>
-
-          {/* Right Status Cluster */}
-          <div className="header-status-cluster">
-            {healthChecking ? (
-              <div className="status-pill checking" title="Querying verification engine health...">
-                <span className="status-dot-pulse" />
-                <span>Checking Engine...</span>
-              </div>
-            ) : (
-              <div
-                className={`status-pill ${health?.status === "healthy" ? "healthy" : "offline"}`}
-                title={
-                  health?.status === "healthy"
-                    ? "Verification engine online — NLI reasoning and decomposition ready"
-                    : "Verification engine offline — backend service unreachable"
-                }
-              >
-                <span className="status-dot" />
-                <span>{health?.status === "healthy" ? "Engine Online" : "Engine Offline"}</span>
-              </div>
-            )}
-            {tavilyStatus?.configured ? (
-              <span className="tavily-pill" title="Live web retrieval configured via Tavily API">
-                Tavily: {tavilyStatus.available_credits} Credits
-              </span>
-            ) : health?.status === "healthy" ? (
-              <span className="tavily-pill fallback" title="Dense local corpus active (live search unconfigured)">
-                Dense Corpus Active
-              </span>
-            ) : null}
-          </div>
-        </header>
+      <div className="app-experience-container">
+        {/* ──────────────────────────────────────────────────────────────────────────
+            TWO DISTINCT HEADER ARCHITECTURES:
+            Landing: NO NAVBAR across the top (Brand upper-left, Status upper-right only)
+            Workspace: Compact technical header bar with back to overview & tool actions
+            ────────────────────────────────────────────────────────────────────────── */}
+        {isLanding ? (
+          <LandingHeader
+            engineOnline={health?.status === "healthy"}
+            engineChecking={healthChecking}
+            tavilyStatus={tavilyStatus}
+            onNavigate={navigateTo}
+            onOpenExtensionModal={() => setIsExtensionModalOpen(true)}
+          />
+        ) : (
+          <WorkspaceHeader
+            currentRoute={currentRoute}
+            onNavigate={navigateTo}
+            onOpenExtensionModal={() => setIsExtensionModalOpen(true)}
+            engineOnline={health?.status === "healthy"}
+            engineChecking={healthChecking}
+            tavilyStatus={tavilyStatus}
+          />
+        )}
 
         {/* Route View Router */}
         <main className="content-container">
@@ -304,6 +286,14 @@ export function App() {
             <LandingHero
               onLaunchAnalyzer={() => navigateTo("analyzer")}
               onNavigateBenchmark={() => navigateTo("benchmark")}
+              onNavigateDevelopers={() => navigateTo("developers")}
+              onOpenExtensionInstall={() => {
+                if (CHROME_EXTENSION_STORE_URL && CHROME_EXTENSION_STORE_URL.trim().length > 0) {
+                  window.open(CHROME_EXTENSION_STORE_URL, "_blank", "noopener,noreferrer");
+                } else {
+                  setIsExtensionModalOpen(true);
+                }
+              }}
               benchmarkResult={benchmarkResult}
             />
           )}
@@ -345,11 +335,21 @@ export function App() {
           )}
         </main>
 
-        {/* Cinematic EpoClaim Startup & Wakeup Modal */}
+        {/* Cold-Start & Health Wakeup Modal */}
         <EngineStartupModal
           isOpen={isWakingUp}
           onReady={handleWakeupReady}
           onCancel={() => setIsWakingUp(false)}
+        />
+
+        {/* Chrome Extension Modal */}
+        <ChromeExtensionModal
+          isOpen={isExtensionModalOpen}
+          onClose={() => setIsExtensionModalOpen(false)}
+          onNavigateToAnalyzer={() => {
+            setIsExtensionModalOpen(false);
+            navigateTo("analyzer");
+          }}
         />
       </div>
     </div>
