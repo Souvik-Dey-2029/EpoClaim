@@ -287,6 +287,7 @@ export interface TavilyStatusResponse {
   available_credits: number;
   consumed_credits: number;
   reserved_credits: number;
+  /** Persistent credit budget cap (default: 5,000 credits). */
   budget_cap: number;
   cache_size: number;
   successful_searches: number;

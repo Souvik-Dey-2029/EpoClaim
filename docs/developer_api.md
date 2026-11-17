@@ -214,10 +214,10 @@ Returns current Tavily search ledger metrics, available credits, rate limits, an
 {
   "configured": true,
   "rate_limit_per_minute": 2,
-  "available_credits": 490,
+  "available_credits": 4990,
   "consumed_credits": 10,
   "reserved_credits": 0,
-  "budget_cap": 500,
+  "budget_cap": 5000,
   "cache_size": 14,
   "successful_searches": 10,
   "failed_searches": 0,
