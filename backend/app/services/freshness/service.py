@@ -183,6 +183,10 @@ class FreshnessService:
                 f"(Newer update: {newest_contra_date.strftime('%Y-%m-%d') if newest_contra_date else 'recent'} vs "
                 f"Previous: {newest_support_date.strftime('%Y-%m-%d') if newest_support_date else 'historical'})."
             )
+            if verification.proposition_results:
+                for pr in verification.proposition_results:
+                    if pr.contradicting_evidence_ids and pr.verdict in {VerificationVerdict.CONTRADICTED, VerificationVerdict.CONFLICTING}:
+                        pr.verdict = VerificationVerdict.OUTDATED
         elif verification.verdict == VerificationVerdict.SUPPORTED:
             freshness_score = round(decay_factor, 4)
         elif verification.verdict == VerificationVerdict.CONTRADICTED:

@@ -130,34 +130,30 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
     def is_claim_decomposition_available(self) -> bool:
         """Check if provider is available and enabled specifically for claim decomposition.
         
-        Requires BOTH enable_llm_semantic_assessment and enable_llm_claim_decomposition to be True.
+        Requires BOTH enable_llm_semantic_assessment and enable_llm_claim_decomposition to be True,
+        and requires the provider connection to be available (not in cooldown).
         """
-        if not (settings.enable_llm_semantic_assessment and settings.enable_llm_claim_decomposition):
+        if not self.is_available:
             return False
-        if not self._base_url:
-            return False
-        return True
+        return bool(settings.enable_llm_claim_decomposition)
 
     @property
     def is_correction_generation_available(self) -> bool:
         """Check if provider is available and enabled specifically for answer correction.
         
-        Requires BOTH enable_llm_semantic_assessment and enable_llm_answer_correction to be True.
+        Requires BOTH enable_llm_semantic_assessment and enable_llm_answer_correction to be True,
+        and requires the provider connection to be available (not in cooldown).
         """
-        if not (settings.enable_llm_semantic_assessment and settings.enable_llm_answer_correction):
+        if not self.is_available:
             return False
-        if not self._base_url:
-            return False
-        return True
+        return bool(settings.enable_llm_answer_correction)
 
     @property
     def is_semantic_assessment_available(self) -> bool:
         """Check if provider is available and enabled specifically for evidence assessment."""
-        if not settings.enable_llm_semantic_assessment:
+        if not self.is_available:
             return False
-        if not self._base_url:
-            return False
-        return True
+        return bool(settings.enable_llm_semantic_assessment)
 
     async def _get_client(self) -> httpx.AsyncClient:
         if self._custom_client is not None:
@@ -165,7 +161,8 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
         headers = {"Content-Type": "application/json"}
         if self._api_key:
             headers["Authorization"] = f"Bearer {self._api_key}"
-        return httpx.AsyncClient(base_url=self._base_url, headers=headers, timeout=self._timeout)
+        timeout_config = httpx.Timeout(self._timeout, connect=min(2.0, self._timeout))
+        return httpx.AsyncClient(base_url=self._base_url, headers=headers, timeout=timeout_config)
 
     def _parse_json(self, raw_text: str) -> Dict[str, Any]:
         """Safely parse JSON response with markdown fence handling."""
@@ -305,6 +302,11 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         raw_response=raw_text,
                         provider_name=self.provider_name,
                     )
+                except (httpx.ConnectError, httpx.ConnectTimeout) as conn_err:
+                    self._last_connect_failure_time = time.monotonic()
+                    logger.warning(f"Bifrost host unreachable ({conn_err.__class__.__name__}): entering cooldown without retries.")
+                    last_error = conn_err
+                    break
                 except (httpx.TimeoutException, httpx.RequestError) as net_err:
                     self._last_connect_failure_time = time.monotonic()
                     logger.warning(f"Bifrost decomposition network exception on attempt {attempts}: {net_err.__class__.__name__}")
@@ -436,6 +438,11 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         raw_response=raw_text,
                         provider_name=self.provider_name,
                     )
+                except (httpx.ConnectError, httpx.ConnectTimeout) as conn_err:
+                    self._last_connect_failure_time = time.monotonic()
+                    logger.warning(f"Bifrost host unreachable for correction ({conn_err.__class__.__name__}): entering cooldown without retries.")
+                    last_error = conn_err
+                    break
                 except (httpx.TimeoutException, httpx.RequestError) as net_err:
                     self._last_connect_failure_time = time.monotonic()
                     logger.warning(f"Bifrost correction network exception on attempt {attempts}: {net_err.__class__.__name__}")
@@ -515,6 +522,11 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
                         duration_ms=duration_ms,
                         raw_response=raw_text,
                     )
+                except (httpx.ConnectError, httpx.ConnectTimeout) as conn_err:
+                    self._last_connect_failure_time = time.monotonic()
+                    logger.warning(f"Bifrost host unreachable for batch assessment ({conn_err.__class__.__name__}): entering cooldown without retries.")
+                    last_error = conn_err
+                    break
                 except (httpx.TimeoutException, httpx.RequestError) as net_err:
                     self._last_connect_failure_time = time.monotonic()
                     logger.warning(f"Bifrost network exception on attempt {attempts}: {net_err.__class__.__name__}")

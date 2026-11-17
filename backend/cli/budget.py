@@ -20,7 +20,7 @@ def main():
 
     # Increase command
     inc_parser = subparsers.add_parser("increase", help="Manually bump budget cap with audit log")
-    inc_parser.add_argument("--new-cap", type=int, required=True, help="New budget cap (e.g. 600, 700)")
+    inc_parser.add_argument("--new-cap", type=int, required=True, help="New budget cap (e.g. 5100, 5200)")
     inc_parser.add_argument("--reason", type=str, required=True, help="Justification for budget change")
 
     # Audit command

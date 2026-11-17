@@ -29,31 +29,40 @@ TAVILY_API_URL = "https://api.tavily.com/search"
 
 
 class TavilyRateLimiter:
-    """Thread-safe and async-safe token/timestamp rate limiter.
+    """Thread-safe and async-safe token bucket rate limiter with burst allowance.
     
-    NOTE ON CONCURRENCY ARCHITECTURE:
-    This rate limiter is process-local (in-memory lock and monotonic timestamp).
-    For initial live-testing and controlled operation, EpoClaim must run with a single
-    FastAPI/Uvicorn backend worker process. Multi-worker deployments would require a
-    shared distributed store (such as Redis or SQLite locking) to coordinate request rates.
+    Allows burst retrieval (e.g. 3-5 concurrent claim queries for an analysis turn)
+    without forcing artificial multi-second sleeps, while respecting the sustained
+    requests-per-minute ceiling and the 5,000 credit cap.
     """
 
-    def __init__(self, requests_per_minute: int = 2):
+    def __init__(self, requests_per_minute: int = 60, burst_capacity: Optional[float] = None):
         self.requests_per_minute = max(1, requests_per_minute)
-        self.min_interval = 60.0 / float(self.requests_per_minute)
-        self.last_request_time = 0.0
+        self.rate_per_second = float(self.requests_per_minute) / 60.0
+        self.capacity = float(burst_capacity if burst_capacity is not None else min(10, max(5, self.requests_per_minute)))
+        self.tokens = self.capacity
+        self.last_refill = time.monotonic()
         self._lock = asyncio.Lock()
 
+    def _refill(self, now: float) -> None:
+        elapsed = now - self.last_refill
+        if elapsed > 0:
+            self.tokens = min(self.capacity, self.tokens + elapsed * self.rate_per_second)
+            self.last_refill = now
+
     async def acquire(self) -> None:
-        """Wait if necessary to enforce the requests-per-minute ceiling."""
+        """Acquire a token, waiting only if the bucket is empty."""
         async with self._lock:
             now = time.monotonic()
-            elapsed = now - self.last_request_time
-            if elapsed < self.min_interval:
-                wait_time = self.min_interval - elapsed
-                logger.info(f"Tavily rate limiter throttling request for {wait_time:.2f}s")
+            self._refill(now)
+            if self.tokens < 1.0:
+                deficit = 1.0 - self.tokens
+                wait_time = deficit / self.rate_per_second
+                logger.info(f"Tavily token bucket empty: waiting {wait_time:.2f}s for refill.")
                 await asyncio.sleep(wait_time)
-            self.last_request_time = time.monotonic()
+                now = time.monotonic()
+                self._refill(now)
+            self.tokens = max(0.0, self.tokens - 1.0)
 
 
 class TavilySearchClient:

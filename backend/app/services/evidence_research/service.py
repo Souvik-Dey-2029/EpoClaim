@@ -9,6 +9,7 @@ Enforces:
 """
 from __future__ import annotations
 
+import asyncio
 import re
 import uuid
 from typing import Any, Dict, List, Optional, Tuple
@@ -169,14 +170,26 @@ class EvidenceResearchService:
 
         combined_plan = claim_query_plan + secondary_query_plan
 
+        # Deduplicate planned queries while preserving claim associations
+        query_to_claims: Dict[str, List[AtomicClaim]] = {}
         for claim, query in combined_plan:
-            if searches_executed >= max_limit:
-                break
-            if not query or query in seen_queries:
+            if not query:
                 continue
-            seen_queries.add(query)
+            query_to_claims.setdefault(query, []).append(claim)
 
-            res = await self.tavily.search(query)
+        # Truncate unique queries to max_limit
+        unique_queries = list(query_to_claims.keys())[:max_limit]
+
+        # Concurrently fetch unique queries with bounded semaphore (concurrency=3)
+        semaphore = asyncio.Semaphore(3)
+
+        async def _fetch_query(q: str):
+            async with semaphore:
+                return q, await self.tavily.search(q)
+
+        results = await asyncio.gather(*[_fetch_query(q) for q in unique_queries]) if unique_queries else []
+
+        for query, res in results:
             if res.get("source") == "cache":
                 cache_hits += 1
             elif res.get("source") == "live":
@@ -201,9 +214,12 @@ class EvidenceResearchService:
                 sentences = re.split(r"(?<=[.!?])\s+", content)
                 citation = sentences[0] if sentences else content[:200]
 
+                associated_claims = query_to_claims.get(query, [])
+                primary_claim_id = associated_claims[0].claim_id if associated_claims else (claims[0].claim_id if claims else "claim_1")
+
                 record = EvidenceRecord(
                     evidence_id=f"ev_{uuid.uuid4().hex[:8]}",
-                    claim_id=claim.claim_id,
+                    claim_id=primary_claim_id,
                     source_url=url,
                     source_title=item.get("title", ""),
                     source_domain=domain,

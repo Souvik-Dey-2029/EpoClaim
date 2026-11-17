@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.api.v1.endpoints import router as api_v1_router
+from app.api.v1.endpoints import router as api_v1_router, v1_alias_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("epoclaim")
@@ -51,13 +51,15 @@ async def limit_request_size_middleware(request: Request, call_next):
     return response
 
 
-# Include API routers
+# Include API routers (both /api/v1 and /v1 prefix to ensure complete Vercel serverless compatibility)
 app.include_router(api_v1_router)
+app.include_router(v1_alias_router)
 
 
 @app.get("/health", tags=["Root"], status_code=status.HTTP_200_OK)
+@app.get("/api/health", tags=["Root"], status_code=status.HTTP_200_OK)
 async def root_health_check():
-    """Top-level health check endpoint for Render and infrastructure probes."""
+    """Top-level health check endpoint for infrastructure and container probes."""
     return {
         "status": "healthy",
         "service": settings.app_name,
@@ -66,8 +68,22 @@ async def root_health_check():
     }
 
 
+@app.get("/api", tags=["Root"], status_code=status.HTTP_200_OK)
+@app.get("/api/", tags=["Root"], status_code=status.HTTP_200_OK)
+async def api_root():
+    """API gateway status and route overview."""
+    return {
+        "platform": settings.app_name,
+        "version": settings.app_version,
+        "status": "online",
+        "api_v1": "/api/v1",
+        "health": "/health",
+        "docs": "/docs",
+    }
+
+
 # ------------------------------------------------------------------------------
-# Frontend Static Asset & Single-Page Application (SPA) Serving
+# Frontend Static Asset & Single-Page Application (SPA) Serving (Local Server Mode)
 # ------------------------------------------------------------------------------
 _root_dir = Path(__file__).resolve().parent.parent.parent
 _frontend_dist = _root_dir / "frontend" / "dist"
@@ -81,8 +97,8 @@ if _assets_dir.is_dir():
 @app.get("/{full_path:path}", tags=["Frontend"])
 async def serve_frontend(full_path: str, request: Request):
     """
-    Serve compiled React frontend assets and SPA routes.
-    - Never intercepts API routes (/api/*), health check (/health), or docs (/docs, /redoc, /openapi.json).
+    Serve compiled React frontend assets and SPA routes when running in container/local mode.
+    - Never intercepts API routes (/api/*, /v1/*), health check (/health), or docs (/docs, /redoc, /openapi.json).
     - Serves exact matching static assets located in frontend/dist (e.g. favicon.ico, cached_benchmark.json).
     - Falls back to index.html for client-side HTML5 history navigation.
     """
@@ -90,6 +106,8 @@ async def serve_frontend(full_path: str, request: Request):
     if (
         full_path.startswith("api/")
         or full_path == "api"
+        or full_path.startswith("v1/")
+        or full_path == "v1"
         or full_path.startswith("health")
         or full_path in ("docs", "redoc", "openapi.json")
     ):
