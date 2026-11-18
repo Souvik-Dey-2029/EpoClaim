@@ -17,13 +17,24 @@ class Settings(BaseSettings):
         validation_alias=AliasChoices("APP_DEBUG", "EPOCLAIM_APP_DEBUG"),
         description="Enable debug mode",
     )
-    environment: str = Field(
-        default="development",
-        validation_alias=AliasChoices("ENVIRONMENT", "EPOCLAIM_ENVIRONMENT"),
-        description="Deployment environment (development, staging, production)",
-    )
+    @field_validator("environment", mode="before")
+    @classmethod
+    def resolve_environment(cls, v: Optional[str]) -> str:
+        if v: return v
+        # Auto-detect Render environment
+        if os.environ.get("RENDER"): return "production"
+        return "development"
 
-    # Server & Security
+    @field_validator("bifrost_base_url", mode="after")
+    @classmethod
+    def sanitize_bifrost_url(cls, v: str) -> str:
+        is_prod = (
+            (os.environ.get("ENVIRONMENT", "").lower() == "production") 
+            or bool(os.environ.get("RENDER"))
+        )
+        if is_prod and v and any(h in v.lower() for h in ["localhost", "127.0.0.1", "0.0.0.0"]):
+            return ""
+        return v
     host: str = Field(
         default="0.0.0.0",
         validation_alias=AliasChoices("HOST", "EPOCLAIM_HOST"),
