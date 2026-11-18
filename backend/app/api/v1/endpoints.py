@@ -2,9 +2,12 @@
 from __future__ import annotations
 
 import os
+import logging
 from typing import Any, Dict, Optional
 import httpx
 from fastapi import APIRouter, Depends, HTTPException, status
+
+logger = logging.getLogger(__name__)
 
 from app.schemas.report import AnalyzeRequest, FinalReport
 from app.schemas.evaluation import EvaluateRequest, BenchmarkReport
