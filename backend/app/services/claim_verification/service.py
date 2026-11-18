@@ -290,10 +290,17 @@ class ClaimVerificationService:
             evidence_ids = [r.evidence_id for r in supporting + contradicting]
 
         else:
-            verdict = VerificationVerdict.INSUFFICIENT_EVIDENCE
-            confidence = 0.4
-            explanation = "Available evidence mentions the subject but is insufficient to confirm or refute the claim."
-            evidence_ids = [r.evidence_id for r in clean_records[:2]]
+            # If evidence mentions the entity but neither supports nor contradicts
+            if clean_records:
+                 verdict = VerificationVerdict.INSUFFICIENT_EVIDENCE
+                 confidence = round(max(agg_support, agg_contra, 0.3), 2)
+                 explanation = "Retrieved evidence is relevant but inconclusive for this specific claim."
+                 evidence_ids = [r.evidence_id for r in clean_records[:3]]
+            else:
+                verdict = VerificationVerdict.INSUFFICIENT_EVIDENCE
+                confidence = 0.4
+                explanation = "No relevant evidence was found to corroborate or refute this claim."
+                evidence_ids = []
 
         result = VerificationResult(
             claim_id=claim.claim_id,
