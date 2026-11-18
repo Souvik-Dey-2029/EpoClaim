@@ -9,7 +9,7 @@ from fastapi.responses import FileResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 from app.core.config import settings
-from app.api.v1.endpoints import router as api_v1_router, v1_alias_router
+from app.api.v1.endpoints import router as api_v1_router
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(name)s: %(message)s")
 logger = logging.getLogger("epoclaim")
@@ -51,10 +51,8 @@ async def limit_request_size_middleware(request: Request, call_next):
     return response
 
 
-# Include API routers (both /api/v1 and /v1 prefix to ensure complete Vercel serverless compatibility)
-app.include_router(api_v1_router)
-app.include_router(v1_alias_router)
-
+# Include API routers
+app.include_router(api_v1_router, prefix="/api/v1")
 
 @app.get("/health", tags=["Root"], status_code=status.HTTP_200_OK)
 @app.get("/api/health", tags=["Root"], status_code=status.HTTP_200_OK)
@@ -102,16 +100,8 @@ async def serve_frontend(full_path: str, request: Request):
     - Serves exact matching static assets located in frontend/dist (e.g. favicon.ico, cached_benchmark.json).
     - Falls back to index.html for client-side HTML5 history navigation.
     """
-    # Strict API route boundary protection
-    if (
-        full_path.startswith("api/")
-        or full_path == "api"
-        or full_path.startswith("v1/")
-        or full_path == "v1"
-        or full_path.startswith("health")
-        or full_path in ("docs", "redoc", "openapi.json")
-    ):
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="API route not found")
+    # Strict API route boundary protection - NOT blocking here ensures FastAPI router takes priority
+    # If the router doesn't match, we will return 404 (for API routes) or index.html (for SPA routes) below.
 
     # If the root or JSON info is explicitly requested via API headers when dist is not built:
     index_file = _frontend_dist / "index.html"

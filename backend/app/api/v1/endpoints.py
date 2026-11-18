@@ -28,6 +28,7 @@ async def analyze_response(
     _auth: Optional[str] = Depends(verify_developer_api_key),
 ) -> FinalReport:
     """Analyze an AI-generated answer for factual correctness and temporal freshness."""
+    logger.info(f"Analyze request received: {request.response_text[:50]}")
     try:
         report = await pipeline.run(request)
         return report
@@ -161,9 +162,5 @@ async def evaluate_scenarios(
 
 
 # Primary /api/v1 router (standard public API prefix)
-router = APIRouter(prefix="/api/v1", tags=["Analysis & Verification"])
+router = APIRouter(tags=["Analysis & Verification"])
 router.include_router(v1_core_router)
-
-# Direct /v1 alias router (for proxy or Vercel serverless rewrites)
-v1_alias_router = APIRouter(prefix="/v1", tags=["Analysis & Verification"])
-v1_alias_router.include_router(v1_core_router)

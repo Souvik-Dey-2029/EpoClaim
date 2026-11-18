@@ -234,7 +234,7 @@ export interface ExtensionSettings {
 }
 
 export const DEV_BACKEND_URL = "http://localhost:8000";
-export const PROD_BACKEND_URL = "https://epoclaim.vercel.app";
+export const PROD_BACKEND_URL = "https://epoclaim.onrender.com";
 export const DEFAULT_BACKEND_URL = PROD_BACKEND_URL;
 
 export const DEFAULT_SETTINGS: ExtensionSettings = {

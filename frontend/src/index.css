@@ -11094,19 +11094,25 @@ html, body {
   z-index: 10;
   will-change: transform, opacity;
   transition: opacity 0.2s ease-out, transform 0.25s ease-out;
+  overflow-y: auto;
 }
 
 .stage-content-wrap {
   width: 100%;
   max-width: 1540px;
-  height: 100%;
-  max-height: calc(100vh - 9rem);
+  height: auto;
+  min-height: 60vh;
+  max-height: 90vh;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
   box-sizing: border-box;
   position: relative;
   z-index: 10;
+  background: rgba(9, 39, 29, 0.65);
+  backdrop-filter: blur(12px);
+  padding: 2rem;
+  border-radius: 12px;
 }
 
 /* Eyebrow metadata band */
@@ -11598,6 +11604,11 @@ html, body {
   position: relative;
   z-index: 12;
   box-sizing: border-box;
+}
+
+.stage-3-engine {
+  align-items: flex-start;
+  padding-top: 4rem;
 }
 
 /* Continuous Sequence Conduit Bar running across all 4 stages */
