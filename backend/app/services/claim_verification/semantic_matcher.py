@@ -121,12 +121,25 @@ class GeneralSemanticVerifier:
         shared = c_tokens.intersection(e_tokens)
         overlap_ratio = len(shared) / len(c_tokens)
 
-        # 2. Check for conflicting version assignment (e.g. 3.11 vs 3.12 for same predicate)
-        if c_versions and e_versions and c_versions != e_versions:
-            non_version_shared = (c_tokens - c_versions).intersection(e_tokens - e_versions)
-            if len(non_version_shared) >= 2:
-                # Direct version collision on same asserted property
-                return 0.05, 0.90, 0.05
+        # 2. Check for numeric and comparative inconsistency
+        # e.g., "fixed capacity" (Claim) vs "vary in capacity" (Evidence)
+        c_val_match = re.search(r"(\d+)\s*(kWh|kW|V|A|min)", c_norm)
+        e_val_match = re.search(r"(\d+)\s*(kWh|kW|V|A|min)", e_norm)
+        
+        # Comparative Logic for batteries
+        if c_val_match and e_val_match:
+            c_val, c_unit = c_val_match.groups()
+            e_val, e_unit = e_val_match.groups()
+            if c_unit == e_unit:
+                if c_val != e_val:
+                    # Detected a numerical mismatch in specific technical claims
+                    return 0.05, 0.90, 0.05
+        
+        # Heuristic for "fixed" vs "vary"
+        if "fixed" in c_norm and "vary" in e_norm:
+            return 0.05, 0.90, 0.05
+        if "fixed" in c_norm and "varies" in e_norm:
+            return 0.05, 0.90, 0.05
 
         # 3. Check for conflicting discipline or mutually exclusive categorical values
         # e.g. "Physics" vs "Chemistry", "Bronze" vs "Gold"

@@ -5,6 +5,7 @@
 
 import { useState, useId, useMemo } from "react";
 import type { FinalReport, ClaimAnalysisDetail, EvidenceRecord } from "../types";
+import { VerdictPill } from "./VerdictPill";
 
 const CLAIMS_PAGE_SIZE = 6;
 const EVIDENCE_PAGE_SIZE = 4;
@@ -428,48 +429,51 @@ export function ScalableForensicReportView({
             </div>
           </div>
 
-          {/* Clean Editorial Determination Area */}
-          <div className="editorial-determination-block">
-            <div className="determination-header-row">
-              <div className="determination-primary">
-                <span className="determination-kicker">FINAL DETERMINATION</span>
-                <h2
-                  className="determination-headline"
-                  style={{ color: determination.color }}
-                >
-                  {determination.title}
-                </h2>
-                <div className="determination-breakdown-row font-mono">
-                  <span className="stat-item total">{report.total_claims} {report.total_claims === 1 ? "claim" : "claims"} investigated</span>
-                  <span className="stat-dot">•</span>
-                  <span className="stat-item sup">{report.supported_claims} supported</span>
-                  {report.outdated_claims > 0 && (
-                    <>
-                      <span className="stat-dot">•</span>
-                      <span className="stat-item out">{report.outdated_claims} outdated</span>
-                    </>
-                  )}
-                  {report.contradicted_claims > 0 && (
-                    <>
-                      <span className="stat-dot">•</span>
-                      <span className="stat-item con">{report.contradicted_claims} contradicted</span>
-                    </>
-                  )}
-                  {report.insufficient_evidence_claims > 0 && (
-                    <>
-                      <span className="stat-dot">•</span>
-                      <span className="stat-item ins">{report.insufficient_evidence_claims} unconfirmed</span>
-                    </>
-                  )}
+          {/* Compact Verdict Banner & Metrics Grid (Restored Forensic UI) */}
+          <div className="compact-verdict-card">
+            <div className="verdict-banner-horizontal">
+              <div className="verdict-status-box">
+                <span className="verdict-mini-kicker mono-label">FINAL DETERMINATION</span>
+                <div className="verdict-badge-row">
+                  <VerdictPill verdict={overallVerdict} size="lg" />
                 </div>
+              </div>
+
+              <div className="verdict-metrics-grid mono-label">
+                <div className="verdict-stat-card stat-total">
+                  <span className="v-stat-val">{report.total_claims}</span>
+                  <span className="v-stat-lbl">TOTAL CLAIMS</span>
+                </div>
+                <div className="verdict-stat-card stat-sup">
+                  <span className="v-stat-val">{report.supported_claims}</span>
+                  <span className="v-stat-lbl">SUPPORTED</span>
+                </div>
+                {report.outdated_claims > 0 && (
+                  <div className="verdict-stat-card stat-out">
+                    <span className="v-stat-val">{report.outdated_claims}</span>
+                    <span className="v-stat-lbl">OUTDATED</span>
+                  </div>
+                )}
+                {report.contradicted_claims > 0 && (
+                  <div className="verdict-stat-card stat-con">
+                    <span className="v-stat-val">{report.contradicted_claims}</span>
+                    <span className="v-stat-lbl">CONTRADICTED</span>
+                  </div>
+                )}
+                {report.insufficient_evidence_claims > 0 && (
+                  <div className="verdict-stat-card stat-ins">
+                    <span className="v-stat-val">{report.insufficient_evidence_claims}</span>
+                    <span className="v-stat-lbl">UNCONFIRMED</span>
+                  </div>
+                )}
               </div>
             </div>
 
             {/* Executive Summary Narrative */}
             {report.overall_assessment && (
-              <div className="determination-executive-summary">
-                <span className="summary-label">Executive Summary</span>
-                <p className="summary-body">{report.overall_assessment}</p>
+              <div className="verdict-narrative-box">
+                <span className="narrative-label mono-label">EXECUTIVE SUMMARY:</span>
+                <p className="verdict-narrative-text">{report.overall_assessment}</p>
               </div>
             )}
           </div>
@@ -640,28 +644,28 @@ export function ScalableForensicReportView({
             </div>
           </div>
 
-          {/* Responsive Claim Grid */}
+          {/* 2-Column Responsive Card Grid (Restored Forensic UI) */}
           <div className="claims-cards-grid">
             {filteredClaims.slice(0, visibleClaimsCount).map((item, idx) => {
               const isSelected = currentClaim?.claim.claim_id === item.claim.claim_id;
               const v = item.verification.verdict;
-              const statusClass =
+              const accentClass =
                 v === "SUPPORTED"
-                  ? "status-sup"
+                  ? "card-sup"
                   : v === "OUTDATED"
-                  ? "status-out"
+                  ? "card-out"
                   : v === "CONTRADICTED"
-                  ? "status-con"
+                  ? "card-con"
                   : v === "PARTIALLY_SUPPORTED"
-                  ? "status-par"
-                  : "status-ins";
+                  ? "card-par"
+                  : "card-ins";
 
               const confVal = Math.round(item.verification.verification_confidence * 100);
 
               return (
                 <div
                   key={item.claim.claim_id}
-                  className={`editorial-claim-card ${statusClass} ${isSelected ? "is-selected" : ""}`}
+                  className={`claim-grid-card ${accentClass} ${isSelected ? "is-selected" : ""}`}
                   onClick={() => handleSelectClaimWithAutoOpen(item)}
                   role="button"
                   tabIndex={0}
@@ -673,14 +677,12 @@ export function ScalableForensicReportView({
                   }}
                 >
                   <div className="claim-card-top-row">
-                    <span className="claim-num-tag font-mono">
+                    <span className="claim-num-tag mono-label">
                       CLAIM #{String(idx + 1).padStart(2, "0")}
                     </span>
                     <div className="top-pills-cluster">
-                      <span className="claim-conf-chip font-mono">{confVal}% CONF</span>
-                      <span className={`claim-status-label ${statusClass}`}>
-                        {v.replace(/_/g, " ")}
-                      </span>
+                      <span className="claim-conf-chip mono-label">{confVal}% CONF</span>
+                      <VerdictPill verdict={item.verification.verdict} size="sm" />
                     </div>
                   </div>
 
@@ -694,12 +696,12 @@ export function ScalableForensicReportView({
                     </div>
                   )}
 
-                  <div className="claim-card-footer font-mono">
+                  <div className="claim-card-footer mono-label">
                     <span className="card-spo-preview">
                       {item.claim.entity || "entity"} ➔ {item.claim.attribute || "attribute"}
                     </span>
                     <span className="card-action-hint">
-                      {isSelected && isInspectorOpen ? "INSPECTING ▾" : "INSPECT DETAILS →"}
+                      {isSelected && isInspectorOpen ? "ACTIVE INSPECTION ▾" : "INSPECT DETAILS →"}
                     </span>
                   </div>
                 </div>
@@ -747,9 +749,7 @@ export function ScalableForensicReportView({
                   <span className="active-claim-pill font-mono">
                     CLAIM #{String(currentClaimIndex + 1).padStart(2, "0")} OF {claims.length}
                   </span>
-                  <span className={`claim-status-label status-${currentClaim.verification.verdict.toLowerCase().slice(0, 3)}`}>
-                    {currentClaim.verification.verdict.replace(/_/g, " ")}
-                  </span>
+                  <VerdictPill verdict={currentClaim.verification.verdict} size="sm" />
                 </div>
 
                 <div className="panel-nav-actions font-mono">
@@ -812,13 +812,13 @@ export function ScalableForensicReportView({
                   <span className="spo-value">{activeObject}</span>
                 </div>
                 {activeAnchor && (
-                  <div className="spo-extra node-anchor">
+                  <div className="spo-node node-anchor">
                     <span className="spo-label">ANCHOR</span>
                     <span className="spo-value">{activeAnchor}</span>
                   </div>
                 )}
                 {activeProfile && (
-                  <div className="spo-extra node-profile">
+                  <div className="spo-node node-profile">
                     <span className="spo-label">PROFILE</span>
                     <span className="spo-value">{activeProfile.replace(/_/g, " ")}</span>
                   </div>
@@ -855,17 +855,15 @@ export function ScalableForensicReportView({
               {propResults.length > 0 && (
                 <div className="subprops-breakdown-card">
                   <div className="subprops-header font-mono">
-                    <span>DECOMPOSED PROPOSITIONS ({propResults.length})</span>
-                    <span className="text-secondary">Micro-level validation</span>
+                    <span className="subprops-header-title">DECOMPOSED PROPOSITIONS ({propResults.length})</span>
+                    <span className="text-secondary">&bull; Micro-level validation</span>
                   </div>
                   <div className="subprops-grid">
                     {propResults.map((pr, idx) => (
                       <div key={pr.proposition_id || idx} className="subprop-item">
                         <div className="subprop-top font-mono">
                           <span>P#{idx + 1} &bull; {pr.proposition_id}</span>
-                          <span className={`claim-status-label status-${pr.verdict.toLowerCase().slice(0, 3)}`}>
-                            {pr.verdict.replace(/_/g, " ")}
-                          </span>
+                          <VerdictPill verdict={pr.verdict} size="sm" />
                         </div>
                         <p className="subprop-expl">
                           {pr.explanation ? pr.explanation : `Proposition #${idx + 1}`}
@@ -880,6 +878,23 @@ export function ScalableForensicReportView({
                   </div>
                 </div>
               )}
+
+              {/* Quick Jump to Evidence (Restored) */}
+              <div className="inspector-bottom-bar mono-label">
+                <span>
+                  {currentClaimEvidence.length} Evidence Records corroborate or refute this proposition.
+                </span>
+                <button
+                  type="button"
+                  className="jump-to-evidence-btn"
+                  onClick={() => {
+                    setEvidenceScope("active");
+                    scrollToSection("sec-evidence");
+                  }}
+                >
+                  View Associated Evidence Sources ({currentClaimEvidence.length}) ↓
+                </button>
+              </div>
             </div>
           </section>
         )}
@@ -964,7 +979,7 @@ export function ScalableForensicReportView({
                   return (
                     <div
                       key={ev.evidence_id || evIdx}
-                      className={`editorial-evidence-card ${ev.isRefuting ? "is-refuting" : "is-corroborating"}`}
+                      className={`evidence-card-item ${ev.isRefuting ? "is-refuting" : "is-corroborating"}`}
                     >
                       <div className="ev-card-meta-bar font-mono">
                         <span className={`ev-stance-badge ${ev.isRefuting ? "badge-contra" : "badge-sup"}`}>

@@ -117,9 +117,13 @@ class BifrostSemanticProvider(BaseSemanticReasoningProvider):
         """Check if provider is configured and available for any semantic reasoning task."""
         if not self._base_url:
             return False
+        import os
         # If gateway experienced connection failure recently, remain in cooldown
-        if self._last_connect_failure_time > 0 and (time.monotonic() - self._last_connect_failure_time) < self._cooldown_seconds:
-            return False
+        # But allow a manual override if BIFROST_BYPASS_COOLDOWN is set
+        bypass = os.environ.get("BIFROST_BYPASS_COOLDOWN", "false").lower() == "true"
+        if not bypass:
+            if self._last_connect_failure_time > 0 and (time.monotonic() - self._last_connect_failure_time) < self._cooldown_seconds:
+                return False
         return (
             settings.enable_llm_semantic_assessment
             or settings.enable_llm_claim_decomposition

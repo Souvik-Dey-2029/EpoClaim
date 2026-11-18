@@ -250,6 +250,19 @@ class ClaimExtractionService:
             value = match.group(3).strip()
             return entity, attribute, value
 
+        # Check for possessive/attribute statements: "X have/has Y"
+        match3 = re.search(r"^(.*?)\s+(have|has|possess|contain)\s+(.*)$", text, re.IGNORECASE)
+        if match3:
+            entity = match3.group(1).strip()
+            # If the value contains 'a fixed capacity of 100 kWh', try to split
+            value = match3.group(3).strip()
+            # Crude split for EV batteries: 'a fixed capacity of 100 kWh' -> attribute: 'capacity', value: '100 kWh'
+            if 'capacity of' in value:
+                attribute = 'capacity'
+                val = value.split('capacity of')[-1].strip()
+                return entity, attribute, val
+            return entity, "state", value
+
         # Check for release / launch statements: "X released Y in Z"
         match2 = re.search(r"^(.*?)\s+(released|launched|announced|acquired|founded)\s+(.*)$", text, re.IGNORECASE)
         if match2:
