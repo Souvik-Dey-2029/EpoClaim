@@ -91,6 +91,31 @@ export function OptionsApp() {
       </div>
 
       <form onSubmit={handleSave} style={{ display: "flex", flexDirection: "column", gap: "1.5rem" }}>
+        {/* Setup Guide */}
+        <div className="card">
+          <h2 className="card-title">Getting Started</h2>
+          <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
+            <div className="step" style={{ display: "flex", gap: "1rem" }}>
+              <div className="step-number" style={{ background: "#34d399", color: "#000", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>1</div>
+              <div>
+                <div className="field-label">Install & Configure</div>
+                <div className="field-desc">
+                  Ensure the extension is loaded in Developer Mode. EpoClaim comes pre-configured with the production backend.
+                </div>
+              </div>
+            </div>
+            <div className="step" style={{ display: "flex", gap: "1rem" }}>
+              <div className="step-number" style={{ background: "#34d399", color: "#000", borderRadius: "50%", width: "24px", height: "24px", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold" }}>2</div>
+              <div>
+                <div className="field-label">Verify Backend Status</div>
+                <div className="field-desc">
+                  Ensure the status says <strong>Connected</strong>. If not, use the <strong>Test Connection</strong> button below or click <strong>Reset to Production</strong>.
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
         {/* Backend Connection */}
         <div className="card">
           <h2 className="card-title">Backend Connection</h2>
@@ -100,7 +125,7 @@ export function OptionsApp() {
               EpoClaim Service Base URL
             </label>
             <span className="field-desc">
-              Specify your local or remote FastAPI service (e.g. <code>http://localhost:8000</code> or your Vercel URL).
+              Specify your local or remote FastAPI service.
             </span>
             <input
               id="backend-url"
@@ -110,7 +135,7 @@ export function OptionsApp() {
               onChange={(e) => setSettings({ ...settings, backendUrl: e.target.value })}
               required
             />
-            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem", flexWrap: "wrap" }}>
               <button
                 type="button"
                 className="btn-secondary"
@@ -125,7 +150,15 @@ export function OptionsApp() {
                 style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem" }}
                 onClick={() => setSettings({ ...settings, backendUrl: PROD_BACKEND_URL })}
               >
-                Production Cloud (Vercel)
+                Production Cloud (Render)
+              </button>
+              <button
+                type="button"
+                className="btn-secondary"
+                style={{ fontSize: "0.75rem", padding: "0.3rem 0.6rem", borderColor: "#fca5a5", color: "#fca5a5" }}
+                onClick={() => setSettings({ ...settings, backendUrl: PROD_BACKEND_URL })}
+              >
+                Reset to Production
               </button>
             </div>
           </div>

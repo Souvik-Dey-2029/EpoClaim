@@ -15,7 +15,16 @@ export async function loadSettings(): Promise<ExtensionSettings> {
     try {
       const data = await chrome.storage.local.get(SETTINGS_KEY);
       if (data && data[SETTINGS_KEY]) {
-        return { ...DEFAULT_SETTINGS, ...data[SETTINGS_KEY] };
+        let settings = { ...DEFAULT_SETTINGS, ...data[SETTINGS_KEY] };
+        
+        // Automatic migration: If user is on an old Vercel URL, force reset to Render
+        if (settings.backendUrl && settings.backendUrl.includes("vercel.app")) {
+          console.warn("[EpoClaim Storage] Detected deprecated Vercel backend. Migrating to Render...");
+          settings.backendUrl = DEFAULT_SETTINGS.backendUrl;
+          await chrome.storage.local.set({ [SETTINGS_KEY]: settings });
+        }
+        
+        return settings;
       }
     } catch (e) {
       console.warn("[EpoClaim Storage] Failed to load settings from storage.local:", e);
