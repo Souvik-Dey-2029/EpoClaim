@@ -57,7 +57,6 @@ async def bifrost_status(
     configured_url = settings.bifrost_base_url or settings.bifrost_endpoint
     is_prod = (
         settings.environment.lower() == "production"
-        or bool(os.environ.get("VERCEL"))
         or bool(os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
     )
     is_loopback = any(h in configured_url.lower() for h in ["localhost", "127.0.0.1", "0.0.0.0"]) if configured_url else False
@@ -69,7 +68,7 @@ async def bifrost_status(
         bifrost_state = "BLOCKED"
         reason = (
             f"BIFROST_BASE_URL is set to a local loopback address ('{configured_url}'), "
-            "which is unreachable from Vercel Serverless Functions. A publicly routable gateway "
+            "which is unreachable from Render. A publicly routable gateway "
             "or tunnel endpoint is required for production LLM verification."
         )
     else:

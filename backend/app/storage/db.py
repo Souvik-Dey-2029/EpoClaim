@@ -33,7 +33,6 @@ def is_production_environment() -> bool:
     env = (settings.environment or "").lower()
     return (
         env == "production"
-        or bool(os.environ.get("VERCEL"))
         or bool(os.environ.get("AWS_LAMBDA_FUNCTION_NAME"))
     )
 

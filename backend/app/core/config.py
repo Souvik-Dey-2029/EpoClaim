@@ -58,15 +58,15 @@ class Settings(BaseSettings):
             "http://127.0.0.1:5173",
             "http://localhost:3000",
             "http://127.0.0.1:3000",
-            "https://epoclaim.vercel.app",
+            "https://epoclaim.vercel.app", # Frontend host
         ],
         validation_alias=AliasChoices("CORS_ORIGINS", "EPOCLAIM_CORS_ORIGINS"),
         description="Allowed CORS origins list or comma-separated string",
     )
     cors_origin_regex: str = Field(
-        default=r"^(https://.*\.vercel\.app|https://.*\.onrender\.com|chrome-extension://.*)$",
+        default=r"^(https://.*\.onrender\.com|chrome-extension://.*)$",
         validation_alias=AliasChoices("CORS_ORIGIN_REGEX", "EPOCLAIM_CORS_ORIGIN_REGEX"),
-        description="Optional regex pattern matching allowed CORS origins (e.g. Vercel subdomains and Chrome Extensions)",
+        description="Optional regex pattern matching allowed CORS origins (e.g. Chrome Extensions)",
     )
 
     @field_validator("cors_origins", mode="before")
